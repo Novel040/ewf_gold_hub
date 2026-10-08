@@ -2,10 +2,17 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import 'dashboard_page.dart';
+import 'harga_emas_page.dart';
+import 'pivot_point_page.dart';
+import 'kalkulator_page.dart';
+import 'histori_page.dart';
+import 'informasi_pt_page.dart';
+
 class BeritaPage extends StatefulWidget {
   const BeritaPage({super.key});
 
- @override
+  @override
   State<BeritaPage> createState() => _BeritaPageState();
 }
 
@@ -32,58 +39,56 @@ class _BeritaPageState extends State<BeritaPage> {
   bool isLoadingNews = true;
   String newsError = '';
 
-@override
-void initState() {
-  super.initState();
-  _loadNews();
-}
+  @override
+  void initState() {
+    super.initState();
+    _loadNews();
+  }
 
-Future<void> _loadNews() async {
-  try {
-    final response = await http.get(
-      Uri.parse('http://10.0.2.2/api/news'),
-    );
+  Future<void> _loadNews() async {
+    try {
+      final response = await http.get(Uri.parse('http://10.0.2.2/api/news'));
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
 
+        setState(() {
+          news = data.map<Map<String, dynamic>>((item) {
+            return {
+              'image': item['image'] ?? '',
+              'category': item['category'] ?? 'Emas',
+              'source': item['source'] ?? 'Newsmaker.id',
+              'date': item['published_at'] ?? '',
+              'title': item['title'] ?? '',
+              'description': item['content'] ?? '',
+              'metric': '-',
+              'metric1Value': '-',
+              'metric2Value': '-',
+            };
+          }).toList();
+
+          isLoadingNews = false;
+          newsError = '';
+        });
+      } else {
+        setState(() {
+          isLoadingNews = false;
+          newsError = 'Gagal mengambil berita (${response.statusCode})';
+        });
+      }
+    } catch (e) {
       setState(() {
-        news = data.map<Map<String, dynamic>>((item) {
-          return {
-            'image': item['image'] ?? '',
-            'category': item['category'] ?? 'Emas',
-            'source': item['source'] ?? 'Newsmaker.id',
-            'date': item['published_at'] ?? '',
-            'title': item['title'] ?? '',
-            'description': item['content'] ?? '',
-            'metric': '-',
-            'metric1Value': '-',
-            'metric2Value': '-',
-          };
-        }).toList();
-
         isLoadingNews = false;
-        newsError = '';
-      });
-    } else {
-      setState(() {
-        isLoadingNews = false;
-        newsError = 'Gagal mengambil berita (${response.statusCode})';
+        newsError = 'Error: $e';
       });
     }
-  } catch (e) {
-  setState(() {
-    isLoadingNews = false;
-    newsError = 'Error: $e';
-  });
-}
-}
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
-      body: SafeArea( 
+      body: SafeArea(
         bottom: false,
         child: Column(
           children: [
@@ -156,11 +161,7 @@ Future<void> _loadNews() async {
               color: const Color(0xFF785600),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
-              Icons.show_chart,
-              color: Colors.white,
-              size: 23,
-            ),
+            child: const Icon(Icons.show_chart, color: Colors.white, size: 23),
           ),
 
           const SizedBox(width: 8),
@@ -188,8 +189,7 @@ Future<void> _loadNews() async {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00855B)
-                            .withValues(alpha: 0.10),
+                        color: const Color(0xFF00855B).withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -252,11 +252,7 @@ Future<void> _loadNews() async {
             ),
             child: const CircleAvatar(
               backgroundColor: Color(0xFFD3E4FE),
-              child: Icon(
-                Icons.person,
-                size: 18,
-                color: Color(0xFF0B1C30),
-              ),
+              child: Icon(Icons.person, size: 18, color: Color(0xFF0B1C30)),
             ),
           ),
         ],
@@ -287,11 +283,7 @@ Future<void> _loadNews() async {
             ),
           ),
           const SizedBox(width: 10),
-          const Icon(
-            Icons.bolt,
-            color: Color(0xFF785600),
-            size: 20,
-          ),
+          const Icon(Icons.bolt, color: Color(0xFF785600), size: 20),
           const SizedBox(width: 8),
           const Expanded(
             child: Text.rich(
@@ -335,10 +327,7 @@ Future<void> _loadNews() async {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 4,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: const Color(0xFFE5EEFF),
               borderRadius: BorderRadius.circular(20),
@@ -346,11 +335,7 @@ Future<void> _loadNews() async {
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.feed_outlined,
-                  size: 16,
-                  color: Color(0xFF785600),
-                ),
+                Icon(Icons.feed_outlined, size: 16, color: Color(0xFF785600)),
                 SizedBox(width: 5),
                 Text(
                   'COMMODITY INTELLIGENCE',
@@ -397,10 +382,7 @@ Future<void> _loadNews() async {
     return SizedBox(
       height: 58,
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 10,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
         itemBuilder: (context, index) {
@@ -440,9 +422,7 @@ Future<void> _loadNews() async {
                     Icon(
                       categoryIcons[index],
                       size: 16,
-                      color: selected
-                          ? Colors.white
-                          : const Color(0xFF4F4535),
+                      color: selected ? Colors.white : const Color(0xFF4F4535),
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -475,13 +455,8 @@ Future<void> _loadNews() async {
     // =========================
     if (isLoadingNews) {
       return const Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 40,
-        ),
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 40),
+        child: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -490,10 +465,7 @@ Future<void> _loadNews() async {
     // =========================
     if (newsError.isNotEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 30,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 30),
         child: Column(
           children: [
             const Icon(
@@ -505,10 +477,7 @@ Future<void> _loadNews() async {
             Text(
               newsError,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF4F4535),
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: Color(0xFF4F4535), fontSize: 13),
             ),
             const SizedBox(height: 12),
             ElevatedButton(
@@ -525,17 +494,11 @@ Future<void> _loadNews() async {
     // =========================
     if (news.isEmpty) {
       return const Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 40,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 40),
         child: Center(
           child: Text(
             'Belum ada berita.',
-            style: TextStyle(
-              color: Color(0xFF4F4535),
-              fontSize: 13,
-            ),
+            style: TextStyle(color: Color(0xFF4F4535), fontSize: 13),
           ),
         ),
       );
@@ -571,254 +534,240 @@ Future<void> _loadNews() async {
   // FEATURED NEWS
   // ============================================================
 
-Widget _buildFeaturedNews(Map<String, dynamic> item) {
-  return Container(
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.07),
-          blurRadius: 8,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    ),
-    clipBehavior: Clip.antiAlias,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Stack(
-          children: [
-            SizedBox(
-              height: 210,
-              width: double.infinity,
-              child: Image.network(
-                item['image'] ?? '',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _imagePlaceholder();
-                },
+  Widget _buildFeaturedNews(Map<String, dynamic> item) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              SizedBox(
+                height: 210,
+                width: double.infinity,
+                child: Image.network(
+                  item['image'] ?? '',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return _imagePlaceholder();
+                  },
+                ),
               ),
-            ),
-            Positioned(
-              left: 14,
-              bottom: 14,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF785600),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  item['category'].toString().toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
+              Positioned(
+                left: 14,
+                bottom: 14,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF785600),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    item['category'].toString().toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSourceDate(
-                item['source'],
-                item['date'],
-                Icons.business,
-              ),
-              const SizedBox(height: 9),
-              Text(
-                item['title'],
-                style: const TextStyle(
-                  color: Color(0xFF0B1C30),
-                  fontSize: 16,
-                  height: 1.35,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                item['description'],
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFF4F4535),
-                  fontSize: 13,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 13),
-              _buildFeaturedMetrics(item),
-              const SizedBox(height: 14),
-              _buildNewsActions(),
             ],
           ),
-        ),
-      ],
-    ),
-  );
-}
-
-// ============================================================
-// COMPACT NEWS
-// ============================================================
-
-Widget _buildCompactNews(Map<String, dynamic> item) {
-  final bool derivative = item['category'] == 'Derivatif';
-
-  return Container(
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.07),
-          blurRadius: 8,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    ),
-    clipBehavior: Clip.antiAlias,
-    child: Column(
-      children: [
-        Stack(
-          children: [
-            SizedBox(
-              height: 180,
-              width: double.infinity,
-              child: Image.network(
-                item['image'] ?? '',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _imagePlaceholder();
-                },
-              ),
-            ),
-            Positioned(
-              top: 12,
-              left: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: derivative
-                      ? const Color(0xFF565E74)
-                      : const Color(0xFF006947),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  item['category'].toString().toUpperCase(),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSourceDate(item['source'], item['date'], Icons.business),
+                const SizedBox(height: 9),
+                Text(
+                  item['title'],
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
+                    color: Color(0xFF0B1C30),
+                    fontSize: 16,
+                    height: 1.35,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                Text(
+                  item['description'],
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF4F4535),
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 13),
+                _buildFeaturedMetrics(item),
+                const SizedBox(height: 14),
+                _buildNewsActions(),
+              ],
             ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // COMPACT NEWS
+  // ============================================================
+
+  Widget _buildCompactNews(Map<String, dynamic> item) {
+    final bool derivative = item['category'] == 'Derivatif';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          Stack(
             children: [
-              _buildSourceDate(
-                item['source'],
-                item['date'],
-                derivative
-                    ? Icons.newspaper
-                    : Icons.storefront,
-              ),
-              const SizedBox(height: 9),
-              Text(
-                item['title'],
-                style: const TextStyle(
-                  color: Color(0xFF0B1C30),
-                  fontSize: 16,
-                  height: 1.35,
-                  fontWeight: FontWeight.w700,
+              SizedBox(
+                height: 180,
+                width: double.infinity,
+                child: Image.network(
+                  item['image'] ?? '',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return _imagePlaceholder();
+                  },
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                item['description'],
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFF4F4535),
-                  fontSize: 13,
-                  height: 1.5,
+              Positioned(
+                top: 12,
+                left: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: derivative
+                        ? const Color(0xFF565E74)
+                        : const Color(0xFF006947),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    item['category'].toString().toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: derivative
-                            ? const Color(0xFFE5EEFF)
-                            : const Color(0xFFE8F7F0),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: Text(
-                        derivative
-                            ? 'Support: ${item['metric']}'
-                            : 'Spot Antam: ${item['metric']}',
-                        style: TextStyle(
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSourceDate(
+                  item['source'],
+                  item['date'],
+                  derivative ? Icons.newspaper : Icons.storefront,
+                ),
+                const SizedBox(height: 9),
+                Text(
+                  item['title'],
+                  style: const TextStyle(
+                    color: Color(0xFF0B1C30),
+                    fontSize: 16,
+                    height: 1.35,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  item['description'],
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF4F4535),
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
                           color: derivative
-                              ? const Color(0xFF4F4535)
-                              : const Color(0xFF006947),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
+                              ? const Color(0xFFE5EEFF)
+                              : const Color(0xFFE8F7F0),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          derivative
+                              ? 'Support: ${item['metric']}'
+                              : 'Spot Antam: ${item['metric']}',
+                          style: TextStyle(
+                            color: derivative
+                                ? const Color(0xFF4F4535)
+                                : const Color(0xFF006947),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  _buildReadButton(),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 10),
+                    _buildReadButton(),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
   // ============================================================
   // SOURCE + DATE
   // ============================================================
 
-  Widget _buildSourceDate(
-    String source,
-    String date,
-    IconData icon,
-  ) {
+  Widget _buildSourceDate(String source, String date, IconData icon) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: const Color(0xFF785600),
-        ),
+        Icon(icon, size: 16, color: const Color(0xFF785600)),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
@@ -855,10 +804,7 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
 
   Widget _buildFeaturedMetrics(Map<String, dynamic> item) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 9,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
         color: const Color(0xFFEFF4FF),
         borderRadius: BorderRadius.circular(8),
@@ -871,10 +817,7 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
               children: [
                 const Text(
                   'Total Akuisisi',
-                  style: TextStyle(
-                    color: Color(0xFF4F4535),
-                    fontSize: 10,
-                  ),
+                  style: TextStyle(color: Color(0xFF4F4535), fontSize: 10),
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -888,11 +831,7 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
               ],
             ),
           ),
-          Container(
-            width: 1,
-            height: 35,
-            color: const Color(0xFFD3E4FE),
-          ),
+          Container(width: 1, height: 35, color: const Color(0xFFD3E4FE)),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(left: 12),
@@ -901,10 +840,7 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
                 children: [
                   const Text(
                     'Sentimen Institusi',
-                    style: TextStyle(
-                      color: Color(0xFF4F4535),
-                      fontSize: 10,
-                    ),
+                    style: TextStyle(color: Color(0xFF4F4535), fontSize: 10),
                   ),
                   const SizedBox(height: 3),
                   Row(
@@ -951,10 +887,7 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
             backgroundColor: const Color(0xFF785600),
             foregroundColor: Colors.white,
             elevation: 0,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 10,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -964,16 +897,10 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
             children: [
               Text(
                 'Baca Selengkapnya',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
               ),
               SizedBox(width: 5),
-              Icon(
-                Icons.arrow_forward,
-                size: 16,
-              ),
+              Icon(Icons.arrow_forward, size: 16),
             ],
           ),
         ),
@@ -988,29 +915,18 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
         backgroundColor: const Color(0xFFE5EEFF),
         foregroundColor: const Color(0xFF0B1C30),
         elevation: 0,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 11,
-          vertical: 9,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             'Baca',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
           ),
           SizedBox(width: 3),
-          Icon(
-            Icons.chevron_right,
-            size: 16,
-          ),
+          Icon(Icons.chevron_right, size: 16),
         ],
       ),
     );
@@ -1027,11 +943,7 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
           color: Color(0xFFE5EEFF),
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          icon,
-          size: 18,
-          color: const Color(0xFF4F4535),
-        ),
+        child: Icon(icon, size: 18, color: const Color(0xFF4F4535)),
       ),
     );
   }
@@ -1046,15 +958,9 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0xFFDCE9FF),
-            Color(0xFFE5EEFF),
-            Color(0xFFEFF4FF),
-          ],
+          colors: [Color(0xFFDCE9FF), Color(0xFFE5EEFF), Color(0xFFEFF4FF)],
         ),
-        borderRadius: BorderRadius.all(
-          Radius.circular(12),
-        ),
+        borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
       child: Row(
         children: [
@@ -1119,20 +1025,14 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
                     });
                   }
                 : null,
-            icon: const Icon(
-              Icons.arrow_back_ios,
-              size: 14,
-            ),
+            icon: const Icon(Icons.arrow_back_ios, size: 14),
             label: const Text('Previous'),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF4F4535),
               backgroundColor: Colors.white,
               side: BorderSide.none,
               elevation: 1,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 9,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
               textStyle: const TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
@@ -1157,19 +1057,13 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
                   }
                 : null,
             label: const Text('Next'),
-            icon: const Icon(
-              Icons.arrow_forward_ios,
-              size: 14,
-            ),
+            icon: const Icon(Icons.arrow_forward_ios, size: 14),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF4F4535),
               backgroundColor: Colors.white,
               side: BorderSide.none,
               elevation: 1,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 9,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
               textStyle: const TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
@@ -1194,9 +1088,7 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
         width: 34,
         height: 34,
         decoration: BoxDecoration(
-          color: selected
-              ? const Color(0xFF785600)
-              : Colors.white,
+          color: selected ? const Color(0xFF785600) : Colors.white,
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
@@ -1210,9 +1102,7 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
         child: Text(
           '$page',
           style: TextStyle(
-            color: selected
-                ? Colors.white
-                : const Color(0xFF0B1C30),
+            color: selected ? Colors.white : const Color(0xFF0B1C30),
             fontSize: 12,
             fontWeight: FontWeight.w700,
           ),
@@ -1243,64 +1133,79 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _bottomItem(
-              Icons.home_outlined,
-              'Dashboard',
-              false,
-            ),
-            _bottomItem(
-              Icons.newspaper,
-              'Berita',
-              true,
-            ),
-            _bottomItem(
-              Icons.show_chart,
-              'Harga',
-              false,
-            ),
-            _bottomItem(
-              Icons.table_chart_outlined,
-              'Pivot',
-              false,
-            ),
-            _bottomItem(
-              Icons.calculate_outlined,
-              'Kalkulator',
-              false,
-            ),
-            _bottomItem(
-              Icons.history,
-              'Histori',
-              false,
-            ),
-            _bottomItem(
-              Icons.apartment_outlined,
-              'Profil PT',
-              false,
-            ),
+            _bottomItem(Icons.home_outlined, 'Dashboard', false),
+            _bottomItem(Icons.newspaper, 'Berita', true),
+            _bottomItem(Icons.show_chart, 'Harga', false),
+            _bottomItem(Icons.table_chart_outlined, 'Pivot', false),
+            _bottomItem(Icons.calculate_outlined, 'Kalkulator', false),
+            _bottomItem(Icons.history, 'Histori', false),
+            _bottomItem(Icons.apartment_outlined, 'Profil PT', false),
           ],
         ),
       ),
     );
   }
 
-  Widget _bottomItem(
-    IconData icon,
-    String label,
-    bool active,
-  ) {
+  Widget _bottomItem(IconData icon, String label, bool active) {
     return Expanded(
       child: InkWell(
-        onTap: () {},
+        onTap: () {
+          switch (label) {
+            case 'Dashboard':
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const DashboardPage()),
+              );
+              break;
+
+            case 'Berita':
+              break;
+
+            case 'Harga':
+             Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HargaEmasPage()),
+              );
+              break;
+
+            case 'Pivot':
+             Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PivotPointPage()),
+              );
+              break;
+
+            case 'Kalkulator':
+             Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const KalkulatorPage()),
+              );
+              break;
+
+            case 'Histori':
+            Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HistoriPage()),
+              );
+              break;
+
+            case 'Profil PT':
+             Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const InformasiPtPage(),
+                ),
+              );
+              break;
+          }
+        },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
               size: 20,
-              color: active
-                  ? const Color(0xFF785600)
-                  : const Color(0xFF565E74),
+              color: active ? const Color(0xFF785600) : const Color(0xFF565E74),
             ),
             const SizedBox(height: 3),
             Text(
@@ -1310,8 +1215,7 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
                     ? const Color(0xFF785600)
                     : const Color(0xFF565E74),
                 fontSize: 9,
-                fontWeight:
-                    active ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
           ],
@@ -1328,11 +1232,7 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
     return Container(
       color: const Color(0xFFDCE9FF),
       child: const Center(
-        child: Icon(
-          Icons.image_outlined,
-          size: 50,
-          color: Color(0xFF785600),
-        ),
+        child: Icon(Icons.image_outlined, size: 50, color: Color(0xFF785600)),
       ),
     );
   }
@@ -1359,10 +1259,7 @@ Widget _buildCompactNews(Map<String, dynamic> item) {
           ),
           content: const Text(
             'Detail berita akan ditampilkan pada halaman artikel.',
-            style: TextStyle(
-              color: Color(0xFF4F4535),
-              height: 1.5,
-            ),
+            style: TextStyle(color: Color(0xFF4F4535), height: 1.5),
           ),
           actions: [
             TextButton(

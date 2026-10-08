@@ -1167,7 +1167,12 @@ class _HistoriPageState extends State<HistoriPage> {
       );
     }
 
-    final data = filteredData;
+    final startIndex = (currentPage - 1) * 10;
+    final endIndex = (startIndex + 10 > filteredData.length)
+        ? filteredData.length
+        : startIndex + 10;
+
+    final data = filteredData.sublist(startIndex, endIndex);
 
     return Container(
       width: double.infinity,
@@ -1241,35 +1246,58 @@ class _HistoriPageState extends State<HistoriPage> {
   }
 
   Widget _buildScrollableTable(List<Map<String, dynamic>> data) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: SizedBox(
-        width: 650,
-        child: Column(
-          children: [
-            _buildTableColumnHeader(),
-            ...List.generate(
-              data.length,
-              (index) => _buildHistoryRow(data[index], index),
-            ),
-          ],
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalWidth = constraints.maxWidth;
+
+        const dateWidth = 92.0;
+        const changeWidth = 72.0;
+
+      final valueWidth =
+    (totalWidth - dateWidth - changeWidth - 24) / 4;
+
+        return SizedBox(
+          width: totalWidth,
+          child: Column(
+            children: [
+              _buildTableColumnHeader(
+                dateWidth: dateWidth,
+                valueWidth: valueWidth,
+                changeWidth: changeWidth,
+              ),
+              ...List.generate(
+                data.length,
+                (index) => _buildHistoryRow(
+                  data[index],
+                  index,
+                  dateWidth: dateWidth,
+                  valueWidth: valueWidth,
+                  changeWidth: changeWidth,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildTableColumnHeader() {
+  Widget _buildTableColumnHeader({
+    required double dateWidth,
+    required double valueWidth,
+    required double changeWidth,
+  }) {
     return Container(
       color: const Color(0xFFE5EEFF),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
-          _tableHeaderCell('Tanggal', 145, alignLeft: true),
-          _tableHeaderCell('Open (USD)', 95),
-          _tableHeaderCell('High (USD)', 95),
-          _tableHeaderCell('Low (USD)', 95),
-          _tableHeaderCell('Close (USD)', 95),
-          _tableHeaderCell('Perubahan', 110),
+          _tableHeaderCell('Tanggal', dateWidth, alignLeft: true),
+          _tableHeaderCell('Open', valueWidth),
+          _tableHeaderCell('High', valueWidth),
+          _tableHeaderCell('Low', valueWidth),
+          _tableHeaderCell('Close', valueWidth),
+          _tableHeaderCell('Change', changeWidth),
         ],
       ),
     );
@@ -1295,148 +1323,233 @@ class _HistoriPageState extends State<HistoriPage> {
     );
   }
 
-  Widget _buildHistoryRow(Map<String, dynamic> item, int index) {
-    final isUp = item['up'] as bool;
+  Widget _buildHistoryRow(
+  Map<String, dynamic> item,
+  int index, {
+  required double dateWidth,
+  required double valueWidth,
+  required double changeWidth,
+}) {
+  final rawUp = item['up'];
 
-    return Container(
-      color: index.isOdd ? const Color(0xFFF8F9FF) : Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 145,
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.calendar_today_outlined,
-                  size: 15,
-                  color: Color(0xFF4F4535),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  item['date'],
+  final bool isUp = rawUp is bool
+      ? rawUp
+      : rawUp.toString().toLowerCase() == 'true';
+
+  String formatPrice(dynamic value) {
+    final number = double.tryParse(value?.toString() ?? '') ?? 0;
+    return number.toStringAsFixed(2);
+  }
+
+  return Container(
+    color: index.isOdd
+        ? const Color(0xFFF8F9FF)
+        : Colors.white,
+    padding: const EdgeInsets.symmetric(
+      horizontal: 12,
+      vertical: 12,
+    ),
+    child: Row(
+      children: [
+        // ============================================================
+        // DATE
+        // ============================================================
+        SizedBox(
+          width: dateWidth,
+          child: Row(
+            children: [
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 15,
+                color: Color(0xFF4F4535),
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  item['date']?.toString() ?? '-',
+                  maxLines: 1,
+                  overflow: TextOverflow.clip,
                   style: GoogleFonts.jetBrainsMono(
-                    fontSize: 11,
+                    fontSize: 9.5,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF0B1C30),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          _tableValue(item['open'], 95),
-          _tableValue(item['high'], 95, bold: true),
-          _tableValue(item['low'], 95, color: const Color(0xFF4F4535)),
-          _tableValue(item['close'], 95, bold: true),
-          SizedBox(
-            width: 110,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Icon(
-                      isUp ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                      size: 15,
-                      color: isUp
-                          ? const Color(0xFF006947)
-                          : const Color(0xFFBA1A1A),
-                    ),
-                    Text(
-                      item['change'],
+        ),
+
+        // ============================================================
+        // OPEN
+        // ============================================================
+        _tableValue(
+          formatPrice(item['open']),
+          valueWidth,
+          fontSize: 9.5,
+        ),
+
+        // ============================================================
+        // HIGH
+        // ============================================================
+        _tableValue(
+          formatPrice(item['high']),
+          valueWidth,
+          bold: true,
+          fontSize: 9.5,
+        ),
+
+        // ============================================================
+        // LOW
+        // ============================================================
+        _tableValue(
+          formatPrice(item['low']),
+          valueWidth,
+          color: const Color(0xFF4F4535),
+          fontSize: 9.5,
+        ),
+
+        // ============================================================
+        // CLOSE
+        // ============================================================
+        _tableValue(
+          formatPrice(item['close']),
+          valueWidth,
+          bold: true,
+          fontSize: 9.5,
+        ),
+
+        // ============================================================
+        // CHANGE
+        // ============================================================
+        SizedBox(
+          width: changeWidth,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Icon(
+                    isUp
+                        ? Icons.arrow_drop_up
+                        : Icons.arrow_drop_down,
+                    size: 14,
+                    color: isUp
+                        ? const Color(0xFF006947)
+                        : const Color(0xFFBA1A1A),
+                  ),
+                  Flexible(
+                    child: Text(
+                      item['change']?.toString() ?? '-',
+                      maxLines: 1,
+                      overflow: TextOverflow.clip,
+                      textAlign: TextAlign.right,
                       style: GoogleFonts.jetBrainsMono(
-                        fontSize: 11,
+                        fontSize: 9.5,
                         fontWeight: FontWeight.w700,
                         color: isUp
                             ? const Color(0xFF006947)
                             : const Color(0xFFBA1A1A),
                       ),
                     ),
-                  ],
-                ),
-                Text(
-                  item['percent'],
-                  style: GoogleFonts.jetBrainsMono(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: isUp
-                        ? const Color(0xFF006947)
-                        : const Color(0xFFBA1A1A),
                   ),
+                ],
+              ),
+              Text(
+                item['percent']?.toString() ?? '-',
+                maxLines: 1,
+                overflow: TextOverflow.clip,
+                textAlign: TextAlign.right,
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w500,
+                  color: isUp
+                      ? const Color(0xFF006947)
+                      : const Color(0xFFBA1A1A),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _tableValue(
-    String value,
-    double width, {
-    bool bold = false,
-    Color color = const Color(0xFF0B1C30),
-  }) {
-    return SizedBox(
-      width: width,
-      child: Text(
-        value,
-        textAlign: TextAlign.right,
-        style: GoogleFonts.jetBrainsMono(
-          fontSize: 11,
-          fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
-          color: color,
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 
-  // ============================================================
-  // EMPTY STATE
-  // ============================================================
+// ============================================================
+// TABLE VALUE
+// ============================================================
 
-  Widget _buildEmptyState() {
-    return Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: Color(0xFFDCE9FF),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.search_off,
-              size: 24,
-              color: Color(0xFF4F4535),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Catatan Tidak Ditemukan',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF0B1C30),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Tidak ada arsip harga untuk parameter tanggal yang dimasukkan.',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 12,
-              color: const Color(0xFF4F4535),
-            ),
-          ),
-        ],
+Widget _tableValue(
+  String value,
+  double width, {
+  bool bold = false,
+  Color? color,
+  double fontSize = 11,
+}) {
+  return SizedBox(
+    width: width,
+    child: Text(
+      value,
+      textAlign: TextAlign.right,
+      maxLines: 1,
+      overflow: TextOverflow.clip,
+      style: GoogleFonts.jetBrainsMono(
+        fontSize: fontSize,
+        fontWeight: bold
+            ? FontWeight.w700
+            : FontWeight.w500,
+        color: color ?? const Color(0xFF0B1C30),
       ),
-    );
-  }
+    ),
+  );
+}
+
+// ============================================================
+// EMPTY STATE
+// ============================================================
+
+Widget _buildEmptyState() {
+  return Padding(
+    padding: const EdgeInsets.all(32),
+    child: Column(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: const BoxDecoration(
+            color: Color(0xFFDCE9FF),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.search_off,
+            size: 24,
+            color: Color(0xFF4F4535),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Catatan Tidak Ditemukan',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF0B1C30),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Tidak ada arsip harga untuk parameter tanggal yang dimasukkan.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            color: const Color(0xFF4F4535),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   // ============================================================
   // PAGINATION
@@ -1545,7 +1658,7 @@ class _HistoriPageState extends State<HistoriPage> {
                 Icons.chevron_right,
                 enabled: currentPage < totalPages,
                 onTap: () {
-                  if (currentPage < 25) {
+                  if (currentPage < totalPages) {
                     setState(() {
                       currentPage++;
                     });

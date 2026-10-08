@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../models/pivot_point.dart';
 import '../services/api_service.dart';
+
+import 'dashboard_page.dart';
+import 'berita_page.dart';
+import 'harga_emas_page.dart';
+import 'kalkulator_page.dart';
+import 'histori_page.dart';
+import 'informasi_pt_page.dart';
 
 class PivotPointPage extends StatefulWidget {
   const PivotPointPage({super.key});
@@ -134,13 +142,17 @@ class _PivotPointPageState extends State<PivotPointPage> {
     return value.toStringAsFixed(_decimalPlaces);
   }
 
+  String _formatPivot(double value) {
+    return value.toStringAsFixed(2);
+  }
+
   // ============================================================
   // CALCULATE PIVOT
   // ============================================================
 
   Future<void> _loadPivotPoint() async {
     try {
-      final data = await ApiService.getPivotPoint();
+      final data = await ApiService.getPivotPoint(_currentAsset);
 
       if (!mounted) return;
 
@@ -156,21 +168,22 @@ class _PivotPointPageState extends State<PivotPointPage> {
       _closeController.text = _format(close);
 
       // Gunakan nilai Pivot dari API.
-      // Hitung Pivot Point berdasarkan OHLC dari API.
-      final range = high - low;
-      final pp = (high + low + close) / 3;
+      final pp = data.pivot;
 
-      // Resistance
-      final r1 = (2 * pp) - low;
-      final r2 = pp + range;
-      final r3 = pp + (range * 2);
-      final r4 = pp + (range * 3);
+      debugPrint('DEBUG PIVOT API: ${data.pivot}');
+      debugPrint('DEBUG PIVOT FORMAT: ${_format(data.pivot)}');
+      final range = data.range;
 
-      // Support
-      final s1 = (2 * pp) - high;
-      final s2 = pp - range;
-      final s3 = pp - (range * 2);
-      final s4 = pp - (range * 3);
+      // Gunakan Resistance dan Support dari API.
+      final r1 = data.r1;
+      final r2 = data.r2;
+      final r3 = data.r3;
+      final r4 = data.r4;
+
+      final s1 = data.s1;
+      final s2 = data.s2;
+      final s3 = data.s3;
+      final s4 = data.s4;
 
       // Midpoints tetap mengikuti struktur
       // Pivot Point yang sudah ada di halaman.
@@ -358,26 +371,20 @@ class _PivotPointPageState extends State<PivotPointPage> {
   // SWITCH ASSET
   // ============================================================
 
-  void _switchAsset(String asset) {
+  Future<void> _switchAsset(String asset) async {
     setState(() {
       _currentAsset = asset;
-
-      if (asset == 'LGD') {
-        _openController.text = '2382.40';
-        _highController.text = '2398.60';
-        _lowController.text = '2375.10';
-        _closeController.text = '2392.80';
-        _decimalController.text = '2';
-      } else {
-        _openController.text = '16720.00';
-        _highController.text = '16890.00';
-        _lowController.text = '16640.00';
-        _closeController.text = '16810.00';
-        _decimalController.text = '0';
-      }
+      _isLoading = true;
+      _errorMessage = null;
     });
 
-    _calculatePivot();
+    if (asset == 'LGD') {
+      _decimalController.text = '2';
+    } else {
+      _decimalController.text = '0';
+    }
+
+    await _loadPivotPoint();
   }
 
   // ============================================================
@@ -393,7 +400,7 @@ class _PivotPointPageState extends State<PivotPointPage> {
   // ============================================================
 
   void _copyPivot() {
-    Clipboard.setData(ClipboardData(text: 'PP: ${_format(_pp)}'));
+    Clipboard.setData(ClipboardData(text: 'PP: ${_formatPivot(_pp)}'));
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -486,6 +493,7 @@ class _PivotPointPageState extends State<PivotPointPage> {
       ),
     );
   }
+
   // ============================================================
   // HEADER
   // ============================================================
@@ -938,8 +946,8 @@ class _PivotPointPageState extends State<PivotPointPage> {
           ),
           child: Row(
             children: [
-              const Text(
-                'USD',
+              Text(
+                _currentAsset == 'HSI' ? 'INDEX' : 'USD',
                 style: TextStyle(fontSize: 9, color: Color(0xFF817563)),
               ),
               const SizedBox(width: 6),
@@ -1178,7 +1186,7 @@ class _PivotPointPageState extends State<PivotPointPage> {
                   ),
                 ),
               ),
-              _smallBadge('Range: ${_format(_range)}'),
+              _smallBadge('Range: ${_formatPivot(_range)}'),
             ],
           ),
 
@@ -1710,7 +1718,7 @@ class _PivotPointPageState extends State<PivotPointPage> {
             ),
           ),
           Text(
-            _format(_pp),
+            _formatPivot(_pp),
             style: const TextStyle(
               fontSize: 21,
               fontWeight: FontWeight.w800,
@@ -1857,9 +1865,65 @@ class _PivotPointPageState extends State<PivotPointPage> {
                 width: 82,
                 child: InkWell(
                   onTap: () {
-                    // Navigasi antar halaman akan
-                    // dihubungkan setelah seluruh UI selesai.
-                  },
+  switch (index) {
+    case 0:
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const DashboardPage(),
+        ),
+      );
+      break;
+
+    case 1:
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const BeritaPage(),
+        ),
+      );
+      break;
+
+    case 2:
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HargaEmasPage(),
+        ),
+      );
+      break;
+
+    case 3:
+      break;
+
+    case 4:
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const KalkulatorPage(),
+        ),
+      );
+      break;
+
+    case 5:
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HistoriPage(),
+        ),
+      );
+      break;
+
+    case 6:
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const InformasiPtPage(),
+        ),
+      );
+      break;
+  }
+},
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

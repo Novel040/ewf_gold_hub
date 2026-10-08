@@ -79,7 +79,19 @@ class _NotificationCard extends StatelessWidget {
     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
-        Container(width: 38, height: 38, decoration: BoxDecoration(color: item.color.withOpacity(.10), borderRadius: BorderRadius.circular(10)), child: Icon(item.icon, color: item.color, size: 20)),
+        Container(
+  width: 38,
+  height: 38,
+  decoration: BoxDecoration(
+    color: item.color.withValues(alpha: 0.10),
+    borderRadius: BorderRadius.circular(10),
+  ),
+  child: Icon(
+    item.icon,
+    color: item.color,
+    size: 20,
+  ),
+),
         const SizedBox(width: 10),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(item.category, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: item.color)),

@@ -147,7 +147,7 @@ class DashboardPage extends StatelessWidget {
       // ============================================================
       // BODY
       // ============================================================
-      body: SafeArea(
+                 body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -168,12 +168,180 @@ class DashboardPage extends StatelessWidget {
           ),
         ),
       ),
+
+      // ============================================================
+      // BOTTOM NAVIGATION
+      // ============================================================
+      bottomNavigationBar: _buildBottomNavigation(context),
     );
   }
-
   // ============================================================
   // DRAWER
   // ============================================================
+  // ============================================================
+// BOTTOM NAVIGATION
+// ============================================================
+
+Widget _buildBottomNavigation(BuildContext context) {
+  final items = [
+    (
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home,
+      label: 'Dashboard',
+    ),
+    (
+      icon: Icons.newspaper_outlined,
+      activeIcon: Icons.newspaper,
+      label: 'Berita',
+    ),
+    (
+      icon: Icons.show_chart,
+      activeIcon: Icons.show_chart,
+      label: 'Harga',
+    ),
+    (
+      icon: Icons.table_chart_outlined,
+      activeIcon: Icons.table_chart,
+      label: 'Pivot',
+    ),
+    (
+      icon: Icons.calculate_outlined,
+      activeIcon: Icons.calculate,
+      label: 'Kalkulator',
+    ),
+    (
+      icon: Icons.history_outlined,
+      activeIcon: Icons.history,
+      label: 'Histori',
+    ),
+    (
+      icon: Icons.apartment_outlined,
+      activeIcon: Icons.apartment,
+      label: 'Profil PT',
+    ),
+  ];
+
+  return Container(
+    height: 72,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border(
+        top: BorderSide(color: Colors.grey.shade200),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.04),
+          blurRadius: 10,
+          offset: const Offset(0, -3),
+        ),
+      ],
+    ),
+    child: SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: List.generate(items.length, (index) {
+            final active = index == 0;
+
+            return SizedBox(
+              width: 82,
+              child: InkWell(
+                onTap: () {
+                  switch (index) {
+                    case 0:
+                      break;
+
+                    case 1:
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BeritaPage(),
+                        ),
+                      );
+                      break;
+
+                    case 2:
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HargaEmasPage(),
+                        ),
+                      );
+                      break;
+
+                    case 3:
+                     Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PivotPointPage(),
+                        ),
+                      );
+                      break;
+
+                    case 4:
+                     Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const KalkulatorPage(),
+                        ),
+                      );
+                      break;
+
+                    case 5:
+                     Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HistoriPage(),
+                        ),
+                      );
+                      break;
+
+                    case 6:
+                     Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const InformasiPtPage(),
+                        ),
+                      );
+                      break;
+                  }
+                },
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      active
+                          ? items[index].activeIcon
+                          : items[index].icon,
+                      size: 21,
+                      color: active
+                          ? const Color(0xFF111827)
+                          : const Color(0xFF9CA3AF),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      items[index].label,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: active
+                            ? FontWeight.w800
+                            : FontWeight.w600,
+                        color: active
+                            ? const Color(0xFF111827)
+                            : const Color(0xFF9CA3AF),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    ),
+  );
+}
 
   Widget _buildDrawer(BuildContext context) {
     return Drawer(

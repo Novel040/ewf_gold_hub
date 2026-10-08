@@ -51,29 +51,32 @@ class PivotPoint {
   factory PivotPoint.fromJson(Map<String, dynamic> json) {
     final source = json['source'] as Map<String, dynamic>? ?? {};
 
-    final resistance = json['resistance'] as Map<String, dynamic>? ?? {};
-
-    final support = json['support'] as Map<String, dynamic>? ?? {};
-
     return PivotPoint(
       commodity: json['commodity']?.toString() ?? '',
       date: json['date']?.toString() ?? '',
+
       open: _toDouble(source['open']),
       high: _toDouble(source['high']),
       low: _toDouble(source['low']),
       close: _toDouble(source['close']),
+
       pivot: _toDouble(json['pivot']),
       buy: _toDouble(json['buy']),
       sell: _toDouble(json['sell']),
       range: _toDouble(json['range']),
-      r1: _toDouble(resistance['r1']),
-      r2: _toDouble(resistance['r2']),
-      r3: _toDouble(resistance['r3']),
-      r4: _toDouble(resistance['r4']),
-      s1: _toDouble(support['s1']),
-      s2: _toDouble(support['s2']),
-      s3: _toDouble(support['s3']),
-      s4: _toDouble(support['s4']),
+
+      // Resistance
+      r1: _toDouble(json['r1']),
+      r2: _toDouble(json['r2']),
+      r3: _toDouble(json['r3']),
+      r4: _toDouble(json['r4']),
+
+      // Support
+      s1: _toDouble(json['s1']),
+      s2: _toDouble(json['s2']),
+      s3: _toDouble(json['s3']),
+      s4: _toDouble(json['s4']),
+
       nest: _toDouble(json['nest']),
       unit: json['unit']?.toString() ?? '',
     );

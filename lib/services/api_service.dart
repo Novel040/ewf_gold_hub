@@ -49,8 +49,12 @@ class ApiService {
     return null;
   }
 
-  static Future<PivotPoint> getPivotPoint() async {
-    final response = await http.get(Uri.parse('$baseUrl/pivot-point'));
+  static Future<PivotPoint> getPivotPoint(String commodity) async {
+    final response = await http.get(
+      Uri.parse(
+        '$baseUrl/pivot-point?commodity=${Uri.encodeQueryComponent(commodity)}',
+      ),
+    );
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);

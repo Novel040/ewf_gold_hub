@@ -3,21 +3,21 @@
 namespace App\Console\Commands;
 
 use App\Models\GoldPrice;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
-use Carbon\Carbon;
 
 class SyncNewsMaker extends Command
 {
     protected $signature = 'newsmaker:sync';
 
-    protected $description = 'Sinkronisasi data LGD Daily dari News Maker ke database';
+    protected $description = 'Sinkronisasi data LGD Daily dan HSI Daily dari News Maker ke database';
 
     public function handle(): int
     {
-        $this->info('Mengambil data dari News Maker...');
+        $this->info('Mengambil data dari News Maker API...');
 
-        $url = 'https://www.newsmaker.id/id/tools/historical-data';
+        $url = 'https://www.newsmaker.id/api/historical-data';
 
         try {
             $response = Http::timeout(30)->get($url);
@@ -37,57 +37,43 @@ class SyncNewsMaker extends Command
             return self::FAILURE;
         }
 
-        $html = $response->body();
+        $json = $response->json();
 
-        /*
-         * Data News Maker berada dalam bentuk object JSON
-         * yang di-escape di dalam HTML:
-         *
-         * {\"id\":...,\"tanggal\":..., ...}
-         */
-        $pattern = '/\{\\\\\"id\\\\\":.*?\}/';
+        if (!is_array($json)) {
+            $this->error('Respons News Maker tidak valid.');
 
-        preg_match_all(
-            $pattern,
-            $html,
-            $matches
-        );
+            return self::FAILURE;
+        }
+
+        if (!isset($json['data']) || !is_array($json['data'])) {
+            $this->error('Data historical dari News Maker tidak ditemukan.');
+
+            return self::FAILURE;
+        }
+
+        $rows = $json['data'];
 
         $this->info(
-            'Total object ditemukan: ' . count($matches[0])
+            'Total data dari API: ' . count($rows)
         );
 
         $lgd = [];
+        $hsi = [];
 
-        foreach ($matches[0] as $object) {
-
-            /*
-             * Mengubah:
-             *
-             * {\"id\":...}
-             *
-             * menjadi:
-             *
-             * {"id":...}
-             */
-            $clean = stripslashes($object);
-
-            $data = json_decode($clean, true);
-
+        foreach ($rows as $data) {
             if (!is_array($data)) {
                 continue;
             }
 
-            /*
-             * Hanya ambil LGD Daily.
-             */
-            if (($data['category'] ?? null) !== 'LGD Daily') {
+            $category = $data['category'] ?? null;
+
+            if (
+                $category !== 'LGD Daily' &&
+                $category !== 'HSI Daily'
+            ) {
                 continue;
             }
 
-            /*
-             * Pastikan semua data harga tersedia.
-             */
             if (
                 !isset($data['tanggal']) ||
                 !isset($data['open']) ||
@@ -98,9 +84,6 @@ class SyncNewsMaker extends Command
                 continue;
             }
 
-            /*
-             * Pastikan harga bukan string kosong.
-             */
             if (
                 $data['open'] === '' ||
                 $data['high'] === '' ||
@@ -110,12 +93,15 @@ class SyncNewsMaker extends Command
                 continue;
             }
 
-            $lgd[] = $data;
+            if ($category === 'LGD Daily') {
+                $lgd[] = $data;
+            }
+
+            if ($category === 'HSI Daily') {
+                $hsi[] = $data;
+            }
         }
 
-        /*
-         * Hilangkan kemungkinan duplikat berdasarkan tanggal.
-         */
         $uniqueLgd = [];
 
         foreach ($lgd as $row) {
@@ -124,44 +110,47 @@ class SyncNewsMaker extends Command
 
         $lgd = array_values($uniqueLgd);
 
-        /*
-         * Urutkan berdasarkan tanggal.
-         */
-        usort(
-            $lgd,
-            function ($a, $b) {
-                return strcmp(
-                    $a['tanggal'],
-                    $b['tanggal']
-                );
-            }
-        );
+        $uniqueHsi = [];
+
+        foreach ($hsi as $row) {
+            $uniqueHsi[$row['tanggal']] = $row;
+        }
+
+        $hsi = array_values($uniqueHsi);
+
+        usort($lgd, function ($a, $b) {
+            return strcmp($a['tanggal'], $b['tanggal']);
+        });
+
+        usort($hsi, function ($a, $b) {
+            return strcmp($a['tanggal'], $b['tanggal']);
+        });
 
         $this->info(
             'Total LGD Daily valid: ' . count($lgd)
         );
 
-        if (empty($lgd)) {
-            $this->error('Tidak ada data LGD yang ditemukan.');
+        $this->info(
+            'Total HSI Daily valid: ' . count($hsi)
+        );
+
+        if (empty($lgd) && empty($hsi)) {
+            $this->error(
+                'Tidak ada data LGD Daily atau HSI Daily yang ditemukan.'
+            );
 
             return self::FAILURE;
         }
 
-        $inserted = 0;
-        $updated = 0;
+        $insertedLgd = 0;
+        $updatedLgd = 0;
 
-        /*
-         * Masukkan data satu per satu.
-         */
+        $insertedHsi = 0;
+        $updatedHsi = 0;
+
         foreach ($lgd as $row) {
+            $date = Carbon::parse($row['tanggal'])->endOfDay();
 
-            $date = Carbon::parse(
-                $row['tanggal']
-            )->endOfDay();
-
-            /*
-             * Cari data LGD pada tanggal yang sama.
-             */
             $existing = GoldPrice::where(
                 'commodity',
                 'LGD'
@@ -183,15 +172,43 @@ class SyncNewsMaker extends Command
             ];
 
             if ($existing) {
-
                 $existing->update($payload);
-
-                $updated++;
+                $updatedLgd++;
             } else {
-
                 GoldPrice::create($payload);
+                $insertedLgd++;
+            }
+        }
 
-                $inserted++;
+        foreach ($hsi as $row) {
+            $date = Carbon::parse($row['tanggal'])->endOfDay();
+
+            $existing = GoldPrice::where(
+                'commodity',
+                'HSI'
+            )
+                ->whereDate(
+                    'recorded_at',
+                    $row['tanggal']
+                )
+                ->first();
+
+            $payload = [
+                'commodity' => 'HSI',
+                'price' => (float) $row['close'],
+                'open' => (float) $row['open'],
+                'high' => (float) $row['high'],
+                'low' => (float) $row['low'],
+                'close' => (float) $row['close'],
+                'recorded_at' => $date,
+            ];
+
+            if ($existing) {
+                $existing->update($payload);
+                $updatedHsi++;
+            } else {
+                GoldPrice::create($payload);
+                $insertedHsi++;
             }
         }
 
@@ -200,21 +217,30 @@ class SyncNewsMaker extends Command
         $this->info('Sinkronisasi selesai!');
 
         $this->line(
-            'Data baru ditambahkan : ' . $inserted
+            'LGD baru ditambahkan : ' . $insertedLgd
         );
 
         $this->line(
-            'Data diperbarui       : ' . $updated
+            'LGD diperbarui       : ' . $updatedLgd
         );
 
         $this->line(
-            'Total data News Maker : ' . count($lgd)
+            'HSI baru ditambahkan : ' . $insertedHsi
         );
 
-        /*
-         * Tampilkan data terbaru.
-         */
-        $latest = GoldPrice::where(
+        $this->line(
+            'HSI diperbarui       : ' . $updatedHsi
+        );
+
+        $this->line(
+            'Total LGD News Maker : ' . count($lgd)
+        );
+
+        $this->line(
+            'Total HSI News Maker : ' . count($hsi)
+        );
+
+        $latestLgd = GoldPrice::where(
             'commodity',
             'LGD'
         )
@@ -224,34 +250,75 @@ class SyncNewsMaker extends Command
             )
             ->first();
 
-        if ($latest) {
+        if ($latestLgd) {
             $this->newLine();
 
-            $this->info('DATA LGD TERBARU DI DATABASE:');
+            $this->info(
+                'DATA LGD TERBARU DI DATABASE:'
+            );
 
             $this->line(
                 'Tanggal : '
-                . $latest->recorded_at->format('Y-m-d')
+                . $latestLgd->recorded_at->format('Y-m-d')
             );
 
             $this->line(
-                'Open    : '
-                . $latest->open
+                'Open    : ' . $latestLgd->open
             );
 
             $this->line(
-                'High    : '
-                . $latest->high
+                'High    : ' . $latestLgd->high
             );
 
             $this->line(
-                'Low     : '
-                . $latest->low
+                'Low     : ' . $latestLgd->low
             );
 
             $this->line(
-                'Close   : '
-                . $latest->close
+                'Close   : ' . $latestLgd->close
+            );
+        }
+
+        $latestHsi = GoldPrice::where(
+            'commodity',
+            'HSI'
+        )
+            ->orderBy(
+                'recorded_at',
+                'desc'
+            )
+            ->first();
+
+        if ($latestHsi) {
+            $this->newLine();
+
+            $this->info(
+                'DATA HSI TERBARU DI DATABASE:'
+            );
+
+            $this->line(
+                'DATA HSI TERBARU DI DATABASE:'
+            );
+
+            $this->line(
+                'Tanggal : '
+                . $latestHsi->recorded_at->format('Y-m-d')
+            );
+
+            $this->line(
+                'Open    : ' . $latestHsi->open
+            );
+
+            $this->line(
+                'High    : ' . $latestHsi->high
+            );
+
+            $this->line(
+                'Low     : ' . $latestHsi->low
+            );
+
+            $this->line(
+                'Close   : ' . $latestHsi->close
             );
         }
 

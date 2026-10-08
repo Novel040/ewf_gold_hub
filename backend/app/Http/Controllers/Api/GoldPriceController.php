@@ -4,12 +4,22 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\GoldPrice;
+use Illuminate\Http\Request;
 
 class GoldPriceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $prices = GoldPrice::orderBy('recorded_at', 'desc')->get();
+        $query = GoldPrice::orderBy('recorded_at', 'desc');
+
+        if ($request->has('commodity')) {
+            $query->where(
+                'commodity',
+                strtoupper($request->query('commodity'))
+            );
+        }
+
+        $prices = $query->get();
 
         return response()->json([
             'success' => true,
@@ -18,9 +28,18 @@ class GoldPriceController extends Controller
         ]);
     }
 
-    public function latest()
+    public function latest(Request $request)
     {
-        $price = GoldPrice::orderBy('recorded_at', 'desc')->first();
+        $query = GoldPrice::orderBy('recorded_at', 'desc');
+
+        if ($request->has('commodity')) {
+            $query->where(
+                'commodity',
+                strtoupper($request->query('commodity'))
+            );
+        }
+
+        $price = $query->first();
 
         if (!$price) {
             return response()->json([

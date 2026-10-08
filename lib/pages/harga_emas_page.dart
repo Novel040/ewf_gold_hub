@@ -3,6 +3,13 @@ import 'package:flutter/material.dart';
 import '../models/gold_price.dart';
 import '../services/api_service.dart';
 
+import 'dashboard_page.dart';
+import 'berita_page.dart';
+import 'pivot_point_page.dart';
+import 'kalkulator_page.dart';
+import 'histori_page.dart';
+import 'informasi_pt_page.dart';
+
 class HargaEmasPage extends StatefulWidget {
   const HargaEmasPage({super.key});
 
@@ -11,7 +18,7 @@ class HargaEmasPage extends StatefulWidget {
 }
 
 class _HargaEmasPageState extends State<HargaEmasPage> {
-    GoldPrice? lgdPrice;
+  GoldPrice? lgdPrice;
   GoldPrice? hsiPrice;
   GoldPrice? sniPrice;
 
@@ -97,21 +104,12 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
   int _currentPage = 1;
   int _selectedChartPoint = 0;
 
-  DateTime _startDate = DateTime(2026, 9, 15);
-  DateTime _endDate = DateTime(2026, 9, 21);
+  DateTime _startDate = DateTime(2026, 9, 24);
+  DateTime _endDate = DateTime(2026, 10, 1);
 
-  final List<String> _assets = [
-    'LGD (Loco Gold)',
-    'HSI',
-    'SNI',
-  ];
+  final List<String> _assets = ['LGD (Loco Gold)', 'HSI', 'SNI'];
 
-  final List<String> _periods = [
-    'Hari Ini',
-    '7 Hari',
-    '30 Hari',
-    'Kustom',
-  ];
+  final List<String> _periods = ['Hari Ini', '7 Hari', '30 Hari', 'Kustom'];
 
   List<GoldPrice> _goldPrices = [];
 
@@ -137,9 +135,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
         )
         .toList();
 
-    data.sort(
-      (a, b) => a.recordedAt!.compareTo(b.recordedAt!),
-    );
+    data.sort((a, b) => a.recordedAt!.compareTo(b.recordedAt!));
 
     return data;
   }
@@ -218,18 +214,14 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
   List<OhlcData> get _ohlcData {
     final data = List<GoldPrice>.from(_filteredPrices);
 
-    data.sort(
-      (a, b) => b.recordedAt!.compareTo(a.recordedAt!),
-    );
+    data.sort((a, b) => b.recordedAt!.compareTo(a.recordedAt!));
 
     return data.map((item) {
       final date = item.recordedAt!.toLocal();
 
       double change = 0;
 
-      if (item.open != null &&
-          item.open != 0 &&
-          item.close != null) {
+      if (item.open != null && item.open != 0 && item.close != null) {
         change = ((item.close! - item.open!) / item.open!) * 100;
       }
 
@@ -336,6 +328,10 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
   // ============================================================
 
   void _applyFilter() {
+    setState(() {
+      _selectedPeriod = 3;
+    });
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -638,12 +634,12 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
     final high = item?.high ?? close;
 
     final change = open == null ? 0 : close - open;
-    final changePercent =
-        open == null || open == 0 ? 0 : (change / open) * 100;
+    final changePercent = open == null || open == 0 ? 0 : (change / open) * 100;
 
     final range = high - low;
-    final rangeRatio =
-        range <= 0 ? 0.5 : ((close - low) / range).clamp(0.0, 1.0);
+    final rangeRatio = range <= 0
+        ? 0.5
+        : ((close - low) / range).clamp(0.0, 1.0);
 
     final positive = change >= 0;
 
@@ -685,17 +681,14 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Text(
-                  'USD / t.oz',
-                  style: TextStyle(
+                child: Text(
+                  _selectedAsset == 1 ? 'INDEX' : 'USD / t.oz',
+                  style: const TextStyle(
                     color: Color(0xFFD1D5DB),
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -755,23 +748,18 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
             padding: const EdgeInsets.only(top: 15),
             decoration: BoxDecoration(
               border: Border(
-                top: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
+                top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
               ),
             ),
             child: Row(
               children: [
                 const Text(
                   'Day Range',
-                  style: TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    fontSize: 11,
-                  ),
+                  style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 11),
                 ),
                 const SizedBox(width: 10),
                 Text(
-                 '${_formatPrice(low)} (Low)',
+                  '${_formatPrice(low)} (Low)',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -813,10 +801,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
             const SizedBox(height: 12),
             Text(
               priceError!,
-              style: const TextStyle(
-                color: Color(0xFFFCA5A5),
-                fontSize: 10,
-              ),
+              style: const TextStyle(color: Color(0xFFFCA5A5), fontSize: 10),
             ),
           ],
           if (isLoadingPrices) ...[
@@ -1084,10 +1069,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
             padding: EdgeInsets.symmetric(vertical: 30),
             child: Text(
               'Data historis belum tersedia',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF6B7280),
-              ),
+              style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
             ),
           ),
         ),
@@ -1129,30 +1111,20 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                     SizedBox(height: 4),
                     Text(
                       'Pergerakan historis dari data News Maker',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFF9CA3AF),
-                      ),
+                      style: TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 5,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
                   color: const Color(0xFFECFDF5),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Row(
                   children: [
-                    Icon(
-                      Icons.show_chart,
-                      size: 14,
-                      color: Color(0xFF16A34A),
-                    ),
+                    Icon(Icons.show_chart, size: 14, color: Color(0xFF16A34A)),
                     SizedBox(width: 4),
                     Text(
                       'Live Data',
@@ -1169,10 +1141,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
           ),
           const SizedBox(height: 14),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: const Color(0xFFF9FAFB),
               borderRadius: BorderRadius.circular(8),
@@ -1217,12 +1186,10 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
 
                 if (usableWidth <= 0) return;
 
-                final ratio = ((localPosition.dx - chartLeft) /
-                        usableWidth)
+                final ratio = ((localPosition.dx - chartLeft) / usableWidth)
                     .clamp(0.0, 1.0);
 
-                final index =
-                    (ratio * (data.length - 1)).round().clamp(
+                final index = (ratio * (data.length - 1)).round().clamp(
                   0,
                   data.length - 1,
                 );
@@ -1295,13 +1262,13 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-          '${_ohlcData.length} Entri',
-  style: const TextStyle(
-    fontSize: 9,
-    fontWeight: FontWeight.w700,
-    color: Color(0xFF6B7280),
-  ),
-),
+                    '${_ohlcData.length} Entri',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1400,9 +1367,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
     final start = totalData == 0 ? 0 : ((_currentPage - 1) * 10) + 1;
     final end = totalData == 0
         ? 0
-        : (_currentPage * 10 > totalData
-            ? totalData
-            : _currentPage * 10);
+        : (_currentPage * 10 > totalData ? totalData : _currentPage * 10);
 
     final visiblePages = <int>[];
     final maxVisible = totalPages < 5 ? totalPages : 5;
@@ -1425,36 +1390,24 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
             children: [
               const Text(
                 'Baris per halaman:',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Color(0xFF6B7280),
-                ),
+                style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
               ),
               const SizedBox(width: 6),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 5,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3F4F6),
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: const Text(
                   '10',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
                 ),
               ),
               const Spacer(),
               Text(
                 'Menampilkan $start-$end dari $totalData data',
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
               ),
             ],
           ),
@@ -1519,10 +1472,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                 const SizedBox(width: 3),
                 const Text(
                   '...',
-                  style: TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    fontSize: 11,
-                  ),
+                  style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 11),
                 ),
                 const SizedBox(width: 3),
                 GestureDetector(
@@ -1666,10 +1616,66 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
               return SizedBox(
                 width: 82,
                 child: InkWell(
-                  onTap: () {
-                    // Navigasi akan dihubungkan setelah
-                    // seluruh halaman Flutter selesai.
-                  },
+ onTap: () {
+  switch (index) {
+    case 0:
+     Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const DashboardPage(),
+        ),
+      );
+      break;
+
+    case 1:
+     Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const BeritaPage(),
+        ),
+      );
+      break;
+
+    case 2:
+      break;
+
+    case 3:
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const PivotPointPage(),
+        ),
+      );
+      break;
+
+    case 4:
+     Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const KalkulatorPage(),
+        ),
+      );
+      break;
+
+    case 5:
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HistoriPage(),
+        ),
+      );
+      break;
+
+    case 6:
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const InformasiPtPage(),
+        ),
+      );
+      break;
+  }
+},
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -1922,8 +1928,7 @@ class GoldChartPainter extends CustomPainter {
     // SELECTED POINT
     // ------------------------------------------------------------
 
-    final safeSelectedIndex =
-        selectedIndex.clamp(0, points.length - 1);
+    final safeSelectedIndex = selectedIndex.clamp(0, points.length - 1);
     final selected = points[safeSelectedIndex];
 
     final verticalPaint = Paint()
