@@ -13,8 +13,9 @@ class EwfGoldHubApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'EWF Gold Hub',
-      theme: ThemeData(
-        useMaterial3: true,
+      theme: ThemeData(useMaterial3: true),
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        overscroll: false,
       ),
       home: const LoginPage(),
     );
