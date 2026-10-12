@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 
 class GoldPriceController extends Controller
 {
+    /**
+     * Menampilkan seluruh data harga emas.
+     */
     public function index(Request $request)
     {
         $query = GoldPrice::orderBy('recorded_at', 'desc');
@@ -28,6 +31,10 @@ class GoldPriceController extends Controller
         ]);
     }
 
+    /**
+     * Menampilkan data harga emas terbaru.
+     * Default commodity adalah LGD jika tidak ditentukan.
+     */
     public function latest(Request $request)
     {
         $query = GoldPrice::orderBy('recorded_at', 'desc');
@@ -37,6 +44,8 @@ class GoldPriceController extends Controller
                 'commodity',
                 strtoupper($request->query('commodity'))
             );
+        } else {
+            $query->where('commodity', 'LGD');
         }
 
         $price = $query->first();

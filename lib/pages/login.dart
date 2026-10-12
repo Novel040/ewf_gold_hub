@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dashboard_page.dart';
+import 'daftar_akun_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -56,46 +59,90 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  Future<void> handleLogin() async {
-    final email = emailController.text.trim();
-    final password = passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
+Future<void> handleLogin() async {
+  final email = emailController.text.trim();
+  final password = passwordController.text;
+
+  if (email.isEmpty || password.isEmpty) {
+    showStatus(
+      'Email dan kata sandi wajib diisi.',
+      icon: Icons.warning_amber_rounded,
+      error: true,
+    );
+    return;
+  }
+
+  setState(() {
+    isLoading = true;
+    statusMessage = null;
+  });
+
+  try {
+    const baseUrl = 'http://10.0.2.2:8000/api';
+
+    final response = await http
+        .post(
+          Uri.parse('$baseUrl/login'),
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'email': email,
+            'password': password,
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    final data = jsonDecode(response.body);
+
+    if (!mounted) return;
+
+    if (response.statusCode == 200 &&
+        data is Map &&
+        data['success'] == true) {
       showStatus(
-        'Harap masukkan identitas akun dan kata sandi operasional.',
-        icon: Icons.warning_amber_rounded,
+        'Login berhasil. Mengalihkan ke dashboard...',
+        icon: Icons.check_circle_outline,
+      );
+
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const DashboardPage(),
+        ),
+      );
+    } else {
+      showStatus(
+        data is Map
+            ? (data['message']?.toString() ??
+                'Login gagal. Periksa email dan kata sandi.')
+            : 'Login gagal. Periksa email dan kata sandi.',
+        icon: Icons.error_outline,
         error: true,
       );
-      return;
     }
-
-    setState(() {
-      isLoading = true;
-      statusMessage = null;
-    });
-
-    await Future.delayed(const Duration(milliseconds: 1200));
-
+  } catch (e) {
     if (!mounted) return;
-
-    setState(() {
-      isLoading = false;
-    });
 
     showStatus(
-      'Sesi terautentikasi. Mengalihkan ke Dashboard Analis...',
-      icon: Icons.check_circle_outline,
+      'Tidak dapat terhubung ke server. Periksa koneksi dan coba lagi.',
+      icon: Icons.wifi_off,
+      error: true,
     );
-
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    if (!mounted) return;
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const DashboardPage()),
-    );
+  } finally {
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
+}
 
   void triggerForgotFeedback() {
     showStatus(
@@ -177,8 +224,6 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   _buildBranding(),
                   const SizedBox(height: 8),
-                  _buildMarketTicker(),
-                  const SizedBox(height: 16),
                   _buildLoginCard(),
                   const SizedBox(height: 16),
                   _buildSupportCard(),
@@ -281,66 +326,6 @@ class _LoginPageState extends State<LoginPage> {
           style: jakarta(size: 13, color: secondary),
         ),
       ],
-    );
-  }
-
-  Widget _buildMarketTicker() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: const [
-          BoxShadow(
-            blurRadius: 8,
-            offset: Offset(0, 2),
-            color: Color(0x14000000),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.monetization_on_outlined, color: primary, size: 20),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'XAU / USD REALTIME',
-                  style: jakarta(
-                    size: 10,
-                    weight: FontWeight.w600,
-                    color: secondary,
-                  ),
-                ),
-                RichText(
-                  text: TextSpan(
-                    style: mono(size: 13, weight: FontWeight.w600),
-                    children: const [
-                      TextSpan(text: '\$2,864.40  '),
-                      TextSpan(
-                        text: '+0.48%',
-                        style: TextStyle(
-                          color: tertiary,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.lock_outline, color: tertiary, size: 18),
-          const SizedBox(width: 4),
-          Text(
-            '256-BIT SSL',
-            style: jakarta(size: 10, weight: FontWeight.w600, color: tertiary),
-          ),
-        ],
-      ),
     );
   }
 
@@ -578,6 +563,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
+
                 // Status message
                 if (statusMessage != null) ...[
                   const SizedBox(height: 12),
@@ -594,7 +580,9 @@ class _LoginPageState extends State<LoginPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
-                          statusIcon,
+                          statusError
+                              ? Icons.warning_amber_rounded
+                              : statusIcon,
                           size: 18,
                           color: statusError
                               ? const Color(0xFFBA1A1A)
@@ -605,7 +593,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: Text(
                             statusMessage!,
                             style: jakarta(
-                              size: 13,
+                              size: 12,
                               color: statusError
                                   ? const Color(0xFF93000A)
                                   : onSurfaceVariant,
@@ -616,6 +604,50 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ],
+
+                const SizedBox(height: 16),
+
+                // Tombol menuju halaman pendaftaran
+                Center(
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        'Belum memiliki akun? ',
+                        style: jakarta(
+                          size: 12,
+                          color: secondary,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const DaftarAkunPage(),
+                            ),
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(0, 0),
+                          tapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          'Daftar di sini',
+                          style: jakarta(
+                            size: 12,
+                            weight: FontWeight.w700,
+                            color: primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

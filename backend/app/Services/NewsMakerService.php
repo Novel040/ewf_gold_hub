@@ -8,11 +8,13 @@ use Illuminate\Support\Facades\Http;
 class NewsMakerService
 {
     private string $url =
-        'https://www.newsmaker.id/id/tools/historical-data';
+        'https://www.newsmaker.id/api/historical-data';
 
     public function importLgd(): int
     {
-        $response = Http::timeout(30)->get($this->url);
+        $response = Http::timeout(30)
+            ->acceptJson()
+            ->get($this->url);
 
         if (!$response->successful()) {
             throw new \Exception(
@@ -21,62 +23,42 @@ class NewsMakerService
             );
         }
 
-        $html = $response->body();
+        $items = $response->json('data', []);
 
-        if (empty($html)) {
+        if (empty($items)) {
             throw new \Exception(
-                'Response News Maker kosong.'
-            );
-        }
-
-        /*
-         * News Maker menampilkan data LGD Daily
-         * dalam tabel HTML dengan format:
-         *
-         * Tanggal | Open | High | Low | Close
-         */
-        $pattern = '/<tr[^>]*>\s*'
-            . '<td[^>]*>\s*(\d{4}-\d{2}-\d{2})\s*<\/td>\s*'
-            . '<td[^>]*>\s*([\d.]+)\s*<\/td>\s*'
-            . '<td[^>]*>\s*([\d.]+)\s*<\/td>\s*'
-            . '<td[^>]*>\s*([\d.]+)\s*<\/td>\s*'
-            . '<td[^>]*>\s*([\d.]+)\s*<\/td>\s*'
-            . '<\/tr>/i';
-
-        preg_match_all(
-            $pattern,
-            $html,
-            $matches,
-            PREG_SET_ORDER
-        );
-
-        if (empty($matches)) {
-            throw new \Exception(
-                'Data historis LGD tidak ditemukan.'
+                'Data historis News Maker kosong.'
             );
         }
 
         $imported = 0;
 
-        foreach ($matches as $row) {
-            $date = $row[1];
+        foreach ($items as $item) {
+            if (($item['category'] ?? '') !== 'LGD Daily') {
+                continue;
+            }
 
-            $open = (float) $row[2];
-            $high = (float) $row[3];
-            $low = (float) $row[4];
-            $close = (float) $row[5];
+            if (
+                empty($item['tanggal']) ||
+                $item['open'] === null ||
+                $item['high'] === null ||
+                $item['low'] === null ||
+                $item['close'] === null
+            ) {
+                continue;
+            }
 
             GoldPrice::updateOrCreate(
                 [
                     'commodity' => 'LGD',
-                    'recorded_at' => $date . ' 00:00:00',
+                    'recorded_at' => $item['tanggal'] . ' 00:00:00',
                 ],
                 [
-                    'price' => $close,
-                    'open' => $open,
-                    'high' => $high,
-                    'low' => $low,
-                    'close' => $close,
+                    'price' => $item['close'],
+                    'open' => $item['open'],
+                    'high' => $item['high'],
+                    'low' => $item['low'],
+                    'close' => $item['close'],
                 ]
             );
 

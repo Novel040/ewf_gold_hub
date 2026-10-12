@@ -23,6 +23,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   title: const Text('Notifikasi'),
 ),
       body: ListView(
+        physics: const ClampingScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
         children: [
           Container(
