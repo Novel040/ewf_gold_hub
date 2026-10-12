@@ -144,16 +144,143 @@ Future<void> handleLogin() async {
   }
 }
 
-  void triggerForgotFeedback() {
-    showStatus(
-      'Silakan hubungi Administrator IT Divisi Treasury untuk reset kredensial.',
-      icon: Icons.support_agent,
-    );
-  }
+  
+void triggerForgotFeedback() {
+  final controller = TextEditingController(
+    text: emailController.text.trim(),
+  );
+
+  showDialog(
+    context: context,
+    builder: (dialogContext) {
+      bool isLoading = false;
+      String? message;
+
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Reset Password'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Masukkan email akun kamu. '
+                  'Kami akan mengirim tautan reset password.',
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Alamat email',
+                    hintText: 'nama@email.com',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                if (message != null) ...[
+                  const SizedBox(height: 12),
+                  Text(message!),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isLoading
+                    ? null
+                    : () => Navigator.pop(dialogContext),
+                child: const Text('Batal'),
+              ),
+              ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        final email = controller.text.trim();
+
+                        if (!email.contains('@') ||
+                            !email.contains('.')) {
+                          setDialogState(() {
+                            message = 'Masukkan alamat email yang valid.';
+                          });
+                          return;
+                        }
+
+                        setDialogState(() {
+                          isLoading = true;
+                          message = null;
+                        });
+
+                        try {
+                          // Ganti URL ini jika base URL API
+                          // project kamu disimpan di tempat lain.
+                          final uri = Uri.parse(
+                            'http://10.0.2.2:8000/api/forgot-password',
+                          );
+
+                          final response = await
+                              http.post(
+                            uri,
+                            headers: {
+                              'Accept': 'application/json',
+                              'Content-Type': 'application/json',
+                            },
+                            body: jsonEncode({
+                              'email': email,
+                            }),
+                          );
+
+                          final data = jsonDecode(response.body);
+
+                          if (!dialogContext.mounted) return;
+
+                          setDialogState(() {
+                            if (response.statusCode >= 200 &&
+                                response.statusCode < 300) {
+                              message = data['message']?.toString() ??
+                                  'Jika email terdaftar, '
+                                  'tautan reset akan dikirim.';
+                            } else {
+                              message = data['message']?.toString() ??
+                                  'Permintaan gagal. Coba lagi.';
+                            }
+                          });
+                        } catch (_) {
+                          if (!dialogContext.mounted) return;
+
+                          setDialogState(() {
+                            message =
+                                'Tidak dapat terhubung ke server. '
+                                'Periksa koneksi dan alamat API.';
+                          });
+                        } finally {
+                          if (dialogContext.mounted) {
+                            setDialogState(() {
+                              isLoading = false;
+                            });
+                          }
+                        }
+                      },
+                child: isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Kirim Tautan'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  ).then((_) => controller.dispose());
+}
+
 
   void triggerHelpFeedback() {
     showStatus(
-      'Helpdesk Operasional: support.gold@equityworld.co.id | Hunting: +62 21 515-0555',
+      'Helpdesk Operasional: itsupport.equitypulse@gmail.com | Hunting: +6285749963720',
       icon: Icons.contact_support_outlined,
     );
   }
@@ -397,7 +524,7 @@ Future<void> handleLogin() async {
 
                 // Email
                 Text(
-                  'Email Perusahaan / ID Analis',
+                  'Email Anda',
                   style: jakarta(size: 13, weight: FontWeight.w600),
                 ),
 
@@ -408,7 +535,7 @@ Future<void> handleLogin() async {
                   keyboardType: TextInputType.emailAddress,
                   style: mono(size: 13),
                   decoration: inputDecoration(
-                    hint: 'nama.pengguna@equityworld.co.id',
+                    hint: 'nama.pengguna@gmail.com',
                     icon: Icons.badge_outlined,
                   ),
                 ),

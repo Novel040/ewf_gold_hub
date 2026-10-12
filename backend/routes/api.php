@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\PivotPointController;
 use Illuminate\Support\Facades\URL;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Support\Facades\Password;
 
 Route::get('/gold-prices', [GoldPriceController::class, 'index']);
 Route::get('/gold-prices/latest', [GoldPriceController::class, 'latest']);
@@ -49,3 +50,51 @@ Route::post(
     '/email/resend-verification',
     [AuthController::class, 'resendVerificationEmail']
 )->middleware('throttle:6,1');
+
+
+Route::post('/forgot-password', function (Request $request) {
+    $request->validate([
+        'email' => ['required', 'email'],
+    ]);
+
+    $status = Password::sendResetLink(
+        $request->only('email')
+    );
+
+    if ($status === Password::RESET_LINK_SENT) {
+        return response()->json([
+            'message' => 'Link reset sandi berhasil dikirim ke email.',
+        ]);
+    }
+
+    return response()->json([
+        'message' => 'Email tidak ditemukan atau link reset gagal dikirim.',
+    ], 422);
+});
+
+Route::post('/reset-password', function (Request $request) {
+    $request->validate([
+        'token' => ['required'],
+        'email' => ['required', 'email'],
+        'password' => ['required', 'min:8', 'confirmed'],
+    ]);
+
+    $status = Password::reset(
+        $request->only('email', 'password', 'password_confirmation', 'token'),
+        function ($user, $password) {
+            $user->forceFill([
+                'password' => \Illuminate\Support\Facades\Hash::make($password),
+            ])->save();
+        }
+    );
+
+    if ($status === Password::PASSWORD_RESET) {
+        return response()->json([
+            'message' => 'Sandi berhasil diubah.',
+        ]);
+    }
+
+    return response()->json([
+        'message' => 'Token tidak valid atau sudah kedaluwarsa.',
+    ], 422);
+});

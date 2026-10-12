@@ -247,6 +247,10 @@ final response = await http.post(
   }),
 );
 
+debugPrint('URL REGISTER: ${response.request?.url}');
+debugPrint('STATUS REGISTER: ${response.statusCode}');
+debugPrint('BODY REGISTER: ${response.body}');
+
 final Map<String, dynamic> data = jsonDecode(response.body);
 
 if (response.statusCode == 201 || response.statusCode == 200) {
@@ -281,18 +285,23 @@ if (response.statusCode == 201 || response.statusCode == 200) {
 
   showStatus(message, error: true);
 }
-    } catch (e) {
-      showStatus(
-        'Pendaftaran gagal diproses. Silakan coba kembali.',
-        error: true,
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    }
+    
+} catch (e, stackTrace) {
+  debugPrint('ERROR DAFTAR AKUN: $e');
+  debugPrint('DETAIL ERROR: $stackTrace');
+
+  showStatus(
+    'Terjadi error: $e',
+    error: true,
+  );
+} finally {
+  if (mounted) {
+    setState(() {
+      isLoading = false;
+    });
+  }
+}
+
   }
   @override
   Widget build(BuildContext context) {
