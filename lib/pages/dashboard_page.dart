@@ -8,8 +8,6 @@ import 'histori_page.dart';
 import 'informasi_pt_page.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
-import '../services/api_service.dart';
-import '../models/gold_price.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -149,18 +147,20 @@ class DashboardPage extends StatelessWidget {
               _buildWelcome(),
               const SizedBox(height: 16),
 
-              // LGD
-              _buildMarketStatus(),
+              // Grafik dan tabel khusus instrumen XUL dan HKK
+              _buildLiveChart(
+                title: 'XUL',
+                subtitle: 'Loco London Gold',
+                color: primary,
+              ),
               const SizedBox(height: 16),
-              _buildPriceCards(),
-
-              const SizedBox(height: 24),
-
-              // HSI
-              _buildHsiStatus(),
-              const SizedBox(height: 16),
-              _buildHsiPriceCards(),
-
+              _buildLiveChart(
+                title: 'HKK',
+                subtitle: 'Hang Seng Index Futures',
+                color: green,
+              ),
+              const SizedBox(height: 20),
+              _buildLiveQuotesTable(),
               const SizedBox(height: 16),
               _buildQuickMenu(context),
               const SizedBox(height: 16),
@@ -561,350 +561,68 @@ class DashboardPage extends StatelessWidget {
   }
 
   // ============================================================
-  // MARKET STATUS
+  // LIVE CHART PLACEHOLDER
   // ============================================================
 
-  Widget _buildMarketStatus() {
-    Widget marketCard({
-      required String name,
-      required String symbol,
-      required IconData icon,
-    }) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [primaryContainer, primary]),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: Colors.white, size: 25),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: jakarta(
-                      size: 18,
-                      weight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    symbol,
-                    style: mono(
-                      size: 12,
-                      weight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: green,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    'ACTIVE',
-                    style: jakarta(
-                      size: 10,
-                      weight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+  Widget _buildLiveChart({
+    required String title,
+    required String subtitle,
+    required Color color,
+  }) {
+    final List<double> prices = title.toUpperCase().contains('XUL')
+        ? const [
+            2310.0,
+            2312.5,
+            2308.5,
+            2315.0,
+            2313.0,
+            2318.5,
+            2316.0,
+            2322.0,
+            2319.5,
+            2325.0,
+            2321.5,
+            2328.0,
+            2324.0,
+            2330.0,
+            2327.5,
+            2334.0,
+          ]
+        : const [
+            19850.0,
+            19870.0,
+            19840.0,
+            19890.0,
+            19910.0,
+            19880.0,
+            19930.0,
+            19900.0,
+            19960.0,
+            19920.0,
+            19980.0,
+            19950.0,
+            20010.0,
+            19970.0,
+            20030.0,
+            20060.0,
+          ];
 
-    
-return Column(
-  children: [
-    marketCard(
-      name: 'LGD',
-      symbol: 'XAU / USD',
-      icon: Icons.monetization_on_outlined,
-    ),
-  ],
-);
-}
+    final double firstPrice = prices.first;
+    final double lastPrice = prices.last;
+    final bool isUp = lastPrice >= firstPrice;
 
-
-  Widget _buildHsiStatus() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [primaryContainer, primary]),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.show_chart, color: Colors.white, size: 25),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'HSI',
-                  style: jakarta(
-                    size: 18,
-                    weight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'HANG SENG INDEX',
-                  style: mono(
-                    size: 12,
-                    weight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: green,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              '• ACTIVE',
-              style: jakarta(
-                size: 10,
-                weight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHsiPriceCards() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cards = [
-          _priceCard('OPEN', '—', 'Poin indeks', Icons.login),
-          _priceCard(
-            'HIGH',
-            '—',
-            'Poin indeks',
-            Icons.arrow_upward,
-            positive: true,
-          ),
-          _priceCard('LOW', '—', 'Poin indeks', Icons.arrow_downward),
-          _priceCard(
-            'CLOSE',
-            '—',
-            'Poin indeks',
-            Icons.flag_outlined,
-            positive: true,
-          ),
-        ];
-
-        return Column(
-          children: [
-            Row(
-              children: [
-                Expanded(child: cards[0]),
-                const SizedBox(width: 12),
-                Expanded(child: cards[1]),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(child: cards[2]),
-                const SizedBox(width: 12),
-                Expanded(child: cards[3]),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // ============================================================
-  // PRICE CARDS
-  // ============================================================
-
-  Widget _buildPriceCards() {
-    return FutureBuilder<List<GoldPrice>>(
-      future: ApiService.getGoldPrices(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  const Text('Gagal memuat harga emas.'),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const DashboardPage(),
-                        ),
-                      );
-                    },
-                    child: const Text('Coba lagi'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        final prices = snapshot.data ?? [];
-
-        if (prices.isEmpty) {
-          return const Text('Belum ada data harga emas.');
-        }
-
-        final gold = prices.first;
-
-        String formatPrice(double? value) {
-          if (value == null) return '-';
-          return value.toStringAsFixed(2);
-        }
-
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth > 700;
-
-            final cards = [
-              _priceCard('OPEN', formatPrice(gold.open), 'USD/oz', Icons.login),
-              _priceCard(
-                'HIGH',
-                formatPrice(gold.high),
-                'USD/oz',
-                Icons.arrow_upward,
-                positive: true,
-              ),
-              _priceCard(
-                'LOW',
-                formatPrice(gold.low),
-                'USD/oz',
-                Icons.arrow_downward,
-              ),
-              _priceCard(
-                'CLOSE',
-                formatPrice(gold.close ?? gold.price),
-                'USD/oz',
-                Icons.flag_outlined,
-                positive: true,
-              ),
-            ];
-
-            if (isWide) {
-              return Row(
-                children: [
-                  for (int i = 0; i < cards.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 12),
-                    Expanded(child: cards[i]),
-                  ],
-                ],
-              );
-            }
-
-            return Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(child: cards[0]),
-                    const SizedBox(width: 12),
-                    Expanded(child: cards[1]),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(child: cards[2]),
-                    const SizedBox(width: 12),
-                    Expanded(child: cards[3]),
-                  ],
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _priceCard(
-    String title,
-    String value,
-    String unit,
-    IconData icon, {
-    bool positive = false,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
         color: white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: surfaceContainer),
         boxShadow: const [
           BoxShadow(
-            blurRadius: 8,
-            offset: Offset(0, 2),
-            color: Color(0x10000000),
+            color: Color(0x08000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
           ),
         ],
       ),
@@ -913,28 +631,220 @@ return Column(
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: positive ? green : primary),
-              const SizedBox(width: 6),
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(Icons.show_chart, color: color, size: 23),
+              ),
+              const SizedBox(width: 10),
               Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: jakarta(size: 17, weight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: jakarta(size: 11, color: textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF4D6),
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 child: Text(
-                  title,
+                  'DEMO',
                   style: jakarta(
-                    size: 10,
-                    weight: FontWeight.w600,
-                    color: textSecondary,
+                    size: 9,
+                    weight: FontWeight.w800,
+                    color: primary,
                   ),
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 16),
+
+          // Grafik harga demo.
+          Container(
+            height: 190,
+            width: double.infinity,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAFBFE),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE7EBF2)),
+            ),
+            child: _DemoPriceChart(color: color, prices: prices),
+          ),
+
           const SizedBox(height: 12),
-          Text(value, style: mono(size: 20, weight: FontWeight.w700)),
-          const SizedBox(height: 2),
-          Text(unit, style: jakarta(size: 10, color: textSecondary)),
+
+          // Ringkasan harga demo.
+          Row(
+            children: [
+              Expanded(child: _chartStat('PEMBUKAAN', firstPrice, color)),
+              Expanded(child: _chartStat('TERAKHIR', lastPrice, color)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'PERUBAHAN',
+                      style: jakarta(
+                        size: 9,
+                        color: textSecondary,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${isUp ? '+' : ''}${((lastPrice - firstPrice) / firstPrice * 100).toStringAsFixed(2)}%',
+                      style: jakarta(
+                        size: 11,
+                        color: isUp
+                            ? const Color(0xFF00866A)
+                            : const Color(0xFFD64545),
+                        weight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.info_outline, size: 14, color: textSecondary),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  'Data simulasi untuk preview tampilan, bukan harga pasar live.',
+                  style: jakarta(size: 10, color: textSecondary),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
+
+  Widget _chartStat(String label, double value, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: jakarta(
+            size: 9,
+            color: textSecondary,
+            weight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value.toStringAsFixed(1),
+          style: mono(size: 11, weight: FontWeight.w700),
+        ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // LIVE QUOTES TABLE
+  // ============================================================
+
+  Widget _buildLiveQuotesTable() {
+    final rows = [
+      ('XUL', 'Loco London Gold', '—', '—', '—'),
+      ('HKK', 'Hang Seng Index Futures', '—', '—', '—'),
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: surfaceContainer),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Live Quotes',
+            style: jakarta(size: 17, weight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Ringkasan instrumen XUL dan HKK',
+            style: jakarta(size: 11, color: textSecondary),
+          ),
+          const SizedBox(height: 14),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(surfaceContainerLow),
+              headingTextStyle: jakarta(size: 10, weight: FontWeight.w800),
+              dataTextStyle: mono(size: 11, weight: FontWeight.w600),
+              columnSpacing: 20,
+              horizontalMargin: 10,
+              columns: const [
+                DataColumn(label: Text('KODE')),
+                DataColumn(label: Text('INSTRUMEN')),
+                DataColumn(label: Text('LAST')),
+                DataColumn(label: Text('BID')),
+                DataColumn(label: Text('ASK')),
+              ],
+              rows: rows.map((row) {
+                return DataRow(
+                  cells: [
+                    DataCell(Text(row.$1)),
+                    DataCell(Text(row.$2)),
+                    DataCell(Text(row.$3)),
+                    DataCell(Text(row.$4)),
+                    DataCell(Text(row.$5)),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Nilai “—” berarti data harga belum diterima dari API.',
+            style: jakarta(size: 10, color: textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // PRICE CARD METHODS REMOVED
+  // OPEN/HIGH/LOW/CLOSE and old HSI cards are no longer displayed.
+  // ============================================================
 
   // ============================================================
   // MARKET SUMMARY
@@ -1048,7 +958,7 @@ return Column(
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Data harga emas ditampilkan berdasarkan data yang tersedia pada sistem. Sumber data: News Maker.',
+                  'Grafik dan tabel XUL/HKK memerlukan koneksi ke sumber data live yang valid.',
                   style: jakarta(size: 11, color: textSecondary),
                 ),
               ],
@@ -1057,5 +967,185 @@ return Column(
         ],
       ),
     );
+  }
+
+  // Class painter harus berada di luar DashboardPage.
+  // Pastikan semua kode DashboardPage berakhir di sini.
+}
+
+class _DemoPriceChart extends StatelessWidget {
+  final Color color;
+  final List<double> prices;
+
+  const _DemoPriceChart({required this.color, required this.prices});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _DemoPriceChartPainter(color: color, prices: prices),
+      child: const SizedBox.expand(),
+    );
+  }
+}
+
+class _DemoPriceChartPainter extends CustomPainter {
+  final Color color;
+  final List<double> prices;
+
+  const _DemoPriceChartPainter({required this.color, required this.prices});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (prices.length < 2 || size.width <= 0 || size.height <= 0) {
+      return;
+    }
+
+    const left = 12.0;
+    const right = 12.0;
+    const top = 20.0;
+    const bottom = 24.0;
+
+    final chart = Rect.fromLTRB(
+      left,
+      top,
+      size.width - right,
+      size.height - bottom,
+    );
+
+    if (chart.width <= 0 || chart.height <= 0) {
+      return;
+    }
+
+    final gridPaint = Paint()
+      ..color = color.withValues(alpha: 0.13)
+      ..strokeWidth = 0.8;
+
+    for (int i = 0; i <= 4; i++) {
+      final y = chart.top + chart.height * i / 4;
+      canvas.drawLine(Offset(chart.left, y), Offset(chart.right, y), gridPaint);
+    }
+
+    for (int i = 0; i <= 6; i++) {
+      final x = chart.left + chart.width * i / 6;
+      canvas.drawLine(Offset(x, chart.top), Offset(x, chart.bottom), gridPaint);
+    }
+
+    final minPrice = prices.reduce((a, b) => a < b ? a : b);
+    final maxPrice = prices.reduce((a, b) => a > b ? a : b);
+    final range = maxPrice - minPrice;
+    final safeRange = range == 0 ? 1.0 : range;
+
+    final points = List<Offset>.generate(prices.length, (i) {
+      final x = chart.left + chart.width * i / (prices.length - 1);
+
+      final normalized = (prices[i] - minPrice) / safeRange;
+
+      final y = chart.bottom - chart.height * (0.10 + normalized * 0.78);
+
+      return Offset(x, y);
+    });
+
+    final linePath = Path()..moveTo(points.first.dx, points.first.dy);
+
+    for (int i = 0; i < points.length - 1; i++) {
+      final current = points[i];
+      final next = points[i + 1];
+      final midX = (current.dx + next.dx) / 2;
+
+      linePath.cubicTo(midX, current.dy, midX, next.dy, next.dx, next.dy);
+    }
+
+    final areaPath = Path.from(linePath)
+      ..lineTo(points.last.dx, chart.bottom)
+      ..lineTo(points.first.dx, chart.bottom)
+      ..close();
+
+    canvas.drawPath(
+      areaPath,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            color.withValues(alpha: 0.24),
+            color.withValues(alpha: 0.01),
+          ],
+        ).createShader(chart),
+    );
+
+    canvas.drawPath(
+      linePath,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.2
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+
+    final last = points.last;
+
+    final dashPaint = Paint()
+      ..color = color.withValues(alpha: 0.45)
+      ..strokeWidth = 1;
+
+    for (double x = last.dx; x < chart.right; x += 8) {
+      canvas.drawLine(
+        Offset(x, last.dy),
+        Offset((x + 4).clamp(last.dx, chart.right), last.dy),
+        dashPaint,
+      );
+    }
+
+    canvas.drawCircle(last, 5, Paint()..color = Colors.white);
+
+    canvas.drawCircle(last, 3, Paint()..color = color);
+
+    final label = TextPainter(
+      text: TextSpan(
+        text: prices.last.toStringAsFixed(1),
+        style: TextStyle(
+          color: color,
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    label.paint(
+      canvas,
+      Offset(
+        (last.dx - label.width).clamp(chart.left, chart.right - label.width),
+        (last.dy - label.height - 7).clamp(0.0, size.height - label.height),
+      ),
+    );
+
+    const labels = ['09:00', '11:00', '13:00', '15:00'];
+
+    for (int i = 0; i < labels.length; i++) {
+      final text = TextPainter(
+        text: TextSpan(
+          text: labels[i],
+          style: const TextStyle(color: Color(0xFF8993A4), fontSize: 8),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      final x = chart.left + chart.width * i / (labels.length - 1);
+
+      text.paint(
+        canvas,
+        Offset(
+          (x - text.width / 2).clamp(0.0, size.width - text.width),
+          chart.bottom + 7,
+        ),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DemoPriceChartPainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.prices != prices;
   }
 }
