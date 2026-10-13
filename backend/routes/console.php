@@ -9,6 +9,6 @@ Artisan::command('inspire', function () {
 
 use Illuminate\Support\Facades\Schedule;
 
-Schedule::command('newsmaker:import-gold')
+Schedule::command('newsmaker:sync')
     ->dailyAt('18:00')
     ->timezone('Asia/Jakarta');

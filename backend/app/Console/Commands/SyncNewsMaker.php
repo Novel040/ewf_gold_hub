@@ -20,7 +20,7 @@ class SyncNewsMaker extends Command
         $url = 'https://www.newsmaker.id/api/historical-data';
 
         try {
-            $response = Http::timeout(30)->get($url);
+            $response = Http::timeout(120)->get($url);
         } catch (\Throwable $e) {
             $this->error(
                 'Gagal mengakses News Maker: ' . $e->getMessage()
@@ -59,6 +59,7 @@ class SyncNewsMaker extends Command
 
         $lgd = [];
         $hsi = [];
+        $sni = [];
 
         foreach ($rows as $data) {
             if (!is_array($data)) {
@@ -67,12 +68,13 @@ class SyncNewsMaker extends Command
 
             $category = $data['category'] ?? null;
 
-            if (
-                $category !== 'LGD Daily' &&
-                $category !== 'HSI Daily'
-            ) {
-                continue;
-            }
+           if (!in_array($category, [
+    'LGD Daily',
+    'HSI Daily',
+    'SNI Daily',
+], true)) {
+    continue;
+}
 
             if (
                 !isset($data['tanggal']) ||
@@ -100,6 +102,10 @@ class SyncNewsMaker extends Command
             if ($category === 'HSI Daily') {
                 $hsi[] = $data;
             }
+
+            if ($category === 'SNI Daily') {
+    $sni[] = $data;
+}
         }
 
         $uniqueLgd = [];
@@ -118,6 +124,15 @@ class SyncNewsMaker extends Command
 
         $hsi = array_values($uniqueHsi);
 
+
+$uniqueSni = [];
+
+foreach ($sni as $row) {
+    $uniqueSni[$row['tanggal']] = $row;
+}
+
+$sni = array_values($uniqueSni);
+
         usort($lgd, function ($a, $b) {
             return strcmp($a['tanggal'], $b['tanggal']);
         });
@@ -125,6 +140,11 @@ class SyncNewsMaker extends Command
         usort($hsi, function ($a, $b) {
             return strcmp($a['tanggal'], $b['tanggal']);
         });
+
+
+usort($sni, function ($a, $b) {
+    return strcmp($a['tanggal'], $b['tanggal']);
+});
 
         $this->info(
             'Total LGD Daily valid: ' . count($lgd)
@@ -134,7 +154,7 @@ class SyncNewsMaker extends Command
             'Total HSI Daily valid: ' . count($hsi)
         );
 
-        if (empty($lgd) && empty($hsi)) {
+        if (empty($lgd) && empty($hsi) && empty($sni)) {
             $this->error(
                 'Tidak ada data LGD Daily atau HSI Daily yang ditemukan.'
             );
@@ -212,6 +232,64 @@ class SyncNewsMaker extends Command
             }
         }
 
+
+$insertedSni = 0;
+$updatedSni = 0;
+
+foreach ($sni as $row) {
+    $rawDate = (string) ($row['tanggal'] ?? '');
+
+$date = \DateTimeImmutable::createFromFormat(
+    '!Y-m-d',
+    $rawDate
+);
+
+$errors = \DateTimeImmutable::getLastErrors();
+
+if (
+    !$date ||
+    ($errors !== false && (
+        $errors['warning_count'] > 0 ||
+        $errors['error_count'] > 0
+    )) ||
+    $date->format('Y-m-d') !== $rawDate ||
+    !preg_match('/^[1-9]\d{3}-\d{2}-\d{2}$/', $rawDate)
+) {
+    $this->warn(
+        'Melewati data SNI ID ' .
+        ($row['id'] ?? '?') .
+        ' dengan tanggal tidak valid: ' . $rawDate
+    );
+
+    continue;
+}
+
+$date = Carbon::instance(
+    \DateTime::createFromImmutable($date)
+)->endOfDay();
+    $existing = GoldPrice::where('commodity', 'SNI')
+        ->whereDate('recorded_at', $row['tanggal'])
+        ->first();
+
+    $payload = [
+        'commodity' => 'SNI',
+        'price' => (float) $row['close'],
+        'open' => (float) $row['open'],
+        'high' => (float) $row['high'],
+        'low' => (float) $row['low'],
+        'close' => (float) $row['close'],
+        'recorded_at' => $date,
+    ];
+
+    if ($existing) {
+        $existing->update($payload);
+        $updatedSni++;
+    } else {
+        GoldPrice::create($payload);
+        $insertedSni++;
+    }
+}
+
         $this->newLine();
 
         $this->info('Sinkronisasi selesai!');
@@ -239,7 +317,9 @@ class SyncNewsMaker extends Command
         $this->line(
             'Total HSI News Maker : ' . count($hsi)
         );
-
+$this->line('SNI baru ditambahkan : ' . $insertedSni);
+$this->line('SNI diperbarui       : ' . $updatedSni);
+$this->line('Total SNI News Maker : ' . count($sni));
         $latestLgd = GoldPrice::where(
             'commodity',
             'LGD'

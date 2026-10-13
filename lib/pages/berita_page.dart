@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'berita_detail_page.dart';
 import 'package:http/http.dart' as http;
 
 import 'dashboard_page.dart';
@@ -45,9 +46,34 @@ class _BeritaPageState extends State<BeritaPage> {
     _loadNews();
   }
 
+  String _formatDate(String raw) {
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return raw;
+
+    final date = parsed.toLocal();
+    const months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
   Future<void> _loadNews() async {
     try {
-      final response = await http.get(Uri.parse('http://10.0.2.2/api/news'));
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:8000/api/news'),
+      );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
@@ -58,8 +84,9 @@ class _BeritaPageState extends State<BeritaPage> {
               'image': item['image'] ?? '',
               'category': item['category'] ?? 'Emas',
               'source': item['source'] ?? 'Newsmaker.id',
-              'date': item['published_at'] ?? '',
+              'date': _formatDate((item['published_at'] ?? '').toString()),
               'title': item['title'] ?? '',
+              'url': item['url'] ?? '',
               'description': item['content'] ?? '',
               'metric': '-',
               'metric1Value': '-',
@@ -104,7 +131,6 @@ class _BeritaPageState extends State<BeritaPage> {
                     _buildCategoryFilter(),
                     _buildNewsFeed(),
                     _buildWeeklyDigest(),
-                    _buildPagination(),
                   ],
                 ),
               ),
@@ -504,26 +530,17 @@ class _BeritaPageState extends State<BeritaPage> {
       );
     }
 
-    // =========================
-    // BERITA BERHASIL DIMUAT
-    // =========================
+    // Tampilkan seluruh berita yang diterima dari API.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          // Berita utama
-          _buildFeaturedNews(news[0]),
-
-          // Berita kedua
-          if (news.length > 1) ...[
-            const SizedBox(height: 16),
-            _buildCompactNews(news[1]),
-          ],
-
-          // Berita ketiga
-          if (news.length > 2) ...[
-            const SizedBox(height: 16),
-            _buildCompactNews(news[2]),
+          for (int i = 0; i < news.length; i++) ...[
+            if (i > 0) const SizedBox(height: 16),
+            if (i == 0)
+              _buildFeaturedNews(news[i])
+            else
+              _buildCompactNews(news[i]),
           ],
         ],
       ),
@@ -617,9 +634,8 @@ class _BeritaPageState extends State<BeritaPage> {
                   ),
                 ),
                 const SizedBox(height: 13),
-                _buildFeaturedMetrics(item),
                 const SizedBox(height: 14),
-                _buildNewsActions(),
+                _buildNewsActions(item),
               ],
             ),
           ),
@@ -721,37 +737,9 @@ class _BeritaPageState extends State<BeritaPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 9,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: derivative
-                              ? const Color(0xFFE5EEFF)
-                              : const Color(0xFFE8F7F0),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Text(
-                          derivative
-                              ? 'Support: ${item['metric']}'
-                              : 'Spot Antam: ${item['metric']}',
-                          style: TextStyle(
-                            color: derivative
-                                ? const Color(0xFF4F4535)
-                                : const Color(0xFF006947),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    _buildReadButton(),
-                  ],
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: _buildReadButton(item),
                 ),
               ],
             ),
@@ -799,82 +787,10 @@ class _BeritaPageState extends State<BeritaPage> {
   }
 
   // ============================================================
-  // FEATURED METRICS
-  // ============================================================
-
-  Widget _buildFeaturedMetrics(Map<String, dynamic> item) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF4FF),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Total Akuisisi',
-                  style: TextStyle(color: Color(0xFF4F4535), fontSize: 10),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  item['metric1Value'],
-                  style: const TextStyle(
-                    color: Color(0xFF785600),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(width: 1, height: 35, color: const Color(0xFFD3E4FE)),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Sentimen Institusi',
-                    style: TextStyle(color: Color(0xFF4F4535), fontSize: 10),
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.trending_up,
-                        size: 15,
-                        color: Color(0xFF006947),
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        item['metric2Value'],
-                        style: const TextStyle(
-                          color: Color(0xFF006947),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
   // NEWS ACTIONS
   // ============================================================
 
-  Widget _buildNewsActions() {
+  Widget _buildNewsActions(Map<String, dynamic> item) {
     return Row(
       children: [
         _roundActionButton(Icons.bookmark_border),
@@ -882,7 +798,7 @@ class _BeritaPageState extends State<BeritaPage> {
         _roundActionButton(Icons.share_outlined),
         const Spacer(),
         ElevatedButton(
-          onPressed: _showArticleDialog,
+          onPressed: () => _openNewsDetail(item),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF785600),
             foregroundColor: Colors.white,
@@ -908,9 +824,16 @@ class _BeritaPageState extends State<BeritaPage> {
     );
   }
 
-  Widget _buildReadButton() {
+  void _openNewsDetail(Map<String, dynamic> item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => BeritaDetailPage(article: item)),
+    );
+  }
+
+  Widget _buildReadButton(Map<String, dynamic> item) {
     return ElevatedButton(
-      onPressed: _showArticleDialog,
+      onPressed: () => _openNewsDetail(item),
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFFE5EEFF),
         foregroundColor: const Color(0xFF0B1C30),
@@ -922,11 +845,11 @@ class _BeritaPageState extends State<BeritaPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Baca',
+            'Baca Selengkapnya',
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
           ),
-          SizedBox(width: 3),
-          Icon(Icons.chevron_right, size: 16),
+          SizedBox(width: 5),
+          Icon(Icons.arrow_forward, size: 15),
         ],
       ),
     );
@@ -1007,114 +930,6 @@ class _BeritaPageState extends State<BeritaPage> {
     );
   }
 
-  // ============================================================
-  // PAGINATION
-  // ============================================================
-
-  Widget _buildPagination() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          OutlinedButton.icon(
-            onPressed: selectedPage > 1
-                ? () {
-                    setState(() {
-                      selectedPage--;
-                    });
-                  }
-                : null,
-            icon: const Icon(Icons.arrow_back_ios, size: 14),
-            label: const Text('Previous'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF4F4535),
-              backgroundColor: Colors.white,
-              side: BorderSide.none,
-              elevation: 1,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-              textStyle: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              _pageButton(1),
-              const SizedBox(width: 5),
-              _pageButton(2),
-              const SizedBox(width: 5),
-              _pageButton(3),
-            ],
-          ),
-          OutlinedButton.icon(
-            onPressed: selectedPage < 3
-                ? () {
-                    setState(() {
-                      selectedPage++;
-                    });
-                  }
-                : null,
-            label: const Text('Next'),
-            icon: const Icon(Icons.arrow_forward_ios, size: 14),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF4F4535),
-              backgroundColor: Colors.white,
-              side: BorderSide.none,
-              elevation: 1,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-              textStyle: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _pageButton(int page) {
-    final selected = selectedPage == page;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedPage = page;
-        });
-      },
-      child: Container(
-        width: 34,
-        height: 34,
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFF785600) : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          '$page',
-          style: TextStyle(
-            color: selected ? Colors.white : const Color(0xFF0B1C30),
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // BOTTOM NAVIGATION
-  // ============================================================
-
   Widget _buildBottomNavigation() {
     return Container(
       height: 68,
@@ -1162,35 +977,35 @@ class _BeritaPageState extends State<BeritaPage> {
               break;
 
             case 'Harga':
-             Navigator.push(
+              Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const HargaEmasPage()),
               );
               break;
 
             case 'Pivot':
-             Navigator.push(
+              Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const PivotPointPage()),
               );
               break;
 
             case 'Kalkulator':
-             Navigator.push(
+              Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const KalkulatorPage()),
               );
               break;
 
             case 'Histori':
-            Navigator.push(
+              Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const HistoriPage()),
               );
               break;
 
             case 'Profil PT':
-             Navigator.push(
+              Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const InformasiPtPage(),
@@ -1238,45 +1053,4 @@ class _BeritaPageState extends State<BeritaPage> {
   }
 
   // ============================================================
-  // ARTICLE DIALOG
-  // ============================================================
-
-  void _showArticleDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFFF8F9FF),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Berita Emas',
-            style: TextStyle(
-              color: Color(0xFF0B1C30),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          content: const Text(
-            'Detail berita akan ditampilkan pada halaman artikel.',
-            style: TextStyle(color: Color(0xFF4F4535), height: 1.5),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text(
-                'Tutup',
-                style: TextStyle(
-                  color: Color(0xFF785600),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }

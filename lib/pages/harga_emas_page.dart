@@ -1,4 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../models/gold_price.dart';
 import '../services/api_service.dart';
@@ -342,13 +347,77 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
     );
   }
 
-  void _exportData() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Data sedang disiapkan untuk export...'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  Future<void> _exportData() async {
+    final data = _ohlcData;
+
+    if (data.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tidak ada data untuk diekspor.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    try {
+      String csvCell(String value) {
+        return '"${value.replaceAll('"', '""')}"';
+      }
+
+      final rows = <String>[
+        [
+          'Tanggal',
+          'Open',
+          'High',
+          'Low',
+          'Close',
+          'Perubahan (%)',
+        ].map(csvCell).join(','),
+        ...data.map(
+          (item) => [
+            item.date,
+            item.open.toStringAsFixed(2),
+            item.high.toStringAsFixed(2),
+            item.low.toStringAsFixed(2),
+            item.close.toStringAsFixed(2),
+            item.change.toStringAsFixed(2),
+          ].map(csvCell).join(','),
+        ),
+      ];
+
+      final csvContent = '\uFEFF${rows.join('\r\n')}';
+      final now = DateTime.now();
+      final stamp =
+          '${now.year}${now.month.toString().padLeft(2, '0')}'
+          '${now.day.toString().padLeft(2, '0')}_'
+          '${now.hour.toString().padLeft(2, '0')}'
+          '${now.minute.toString().padLeft(2, '0')}';
+
+      final directory = await getTemporaryDirectory();
+      final file = File('${directory.path}/historis_harga_emas_$stamp.csv');
+
+      await file.writeAsBytes(utf8.encode(csvContent), flush: true);
+
+      if (!mounted) return;
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path, mimeType: 'text/csv')],
+          subject: 'Export Data OHLC Harga Emas',
+          text: 'Data OHLC berisi ${data.length} baris.',
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Export gagal: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   // ============================================================
@@ -1298,7 +1367,9 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                 DataColumn(label: Text('Close')),
                 DataColumn(label: Text('Arah')),
               ],
-              rows: _ohlcData.take(10).map((item) {
+              rows: _ohlcData.skip((_currentPage - 1) * 10).take(10).map((
+                item,
+              ) {
                 final positive = item.change >= 0;
 
                 return DataRow(
@@ -1616,66 +1687,66 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
               return SizedBox(
                 width: 82,
                 child: InkWell(
- onTap: () {
-  switch (index) {
-    case 0:
-     Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const DashboardPage(),
-        ),
-      );
-      break;
+                  onTap: () {
+                    switch (index) {
+                      case 0:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const DashboardPage(),
+                          ),
+                        );
+                        break;
 
-    case 1:
-     Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const BeritaPage(),
-        ),
-      );
-      break;
+                      case 1:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BeritaPage(),
+                          ),
+                        );
+                        break;
 
-    case 2:
-      break;
+                      case 2:
+                        break;
 
-    case 3:
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const PivotPointPage(),
-        ),
-      );
-      break;
+                      case 3:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PivotPointPage(),
+                          ),
+                        );
+                        break;
 
-    case 4:
-     Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const KalkulatorPage(),
-        ),
-      );
-      break;
+                      case 4:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const KalkulatorPage(),
+                          ),
+                        );
+                        break;
 
-    case 5:
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const HistoriPage(),
-        ),
-      );
-      break;
+                      case 5:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HistoriPage(),
+                          ),
+                        );
+                        break;
 
-    case 6:
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const InformasiPtPage(),
-        ),
-      );
-      break;
-  }
-},
+                      case 6:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const InformasiPtPage(),
+                          ),
+                        );
+                        break;
+                    }
+                  },
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
