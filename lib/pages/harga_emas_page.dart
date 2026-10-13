@@ -741,7 +741,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
               ),
               const SizedBox(width: 8),
               const Text(
-                'Harga Penutupan',
+                'Harga Tren (Nest)',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 12,
