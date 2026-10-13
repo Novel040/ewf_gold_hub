@@ -37,7 +37,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
   static const Color onSurface = Color(0xFF0B1C30);
   static const Color onSurfaceVariant = Color(0xFF4F4535);
   static const Color secondary = Color(0xFF565E74);
-  static const Color tertiary = Color(0xFF006947);
+
 
   @override
   void dispose() {

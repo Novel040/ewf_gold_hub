@@ -38,7 +38,6 @@ class _LoginPageState extends State<LoginPage> {
   static const Color onSurfaceVariant = Color(0xFF4F4535);
   static const Color secondary = Color(0xFF565E74);
 
-  static const Color tertiary = Color(0xFF006947);
 
   @override
   void dispose() {
@@ -59,224 +58,210 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
+  Future<void> handleLogin() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text;
 
-Future<void> handleLogin() async {
-  final email = emailController.text.trim();
-  final password = passwordController.text;
-
-  if (email.isEmpty || password.isEmpty) {
-    showStatus(
-      'Email dan kata sandi wajib diisi.',
-      icon: Icons.warning_amber_rounded,
-      error: true,
-    );
-    return;
-  }
-
-  setState(() {
-    isLoading = true;
-    statusMessage = null;
-  });
-
-  try {
-    const baseUrl = 'http://10.0.2.2/api';
-
-    final response = await http
-        .post(
-          Uri.parse('$baseUrl/login'),
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({
-            'email': email,
-            'password': password,
-          }),
-        )
-        .timeout(const Duration(seconds: 15));
-
-    final data = jsonDecode(response.body);
-
-    if (!mounted) return;
-
-    if (response.statusCode == 200 &&
-        data is Map &&
-        data['success'] == true) {
+    if (email.isEmpty || password.isEmpty) {
       showStatus(
-        'Login berhasil. Mengalihkan ke dashboard...',
-        icon: Icons.check_circle_outline,
+        'Email dan kata sandi wajib diisi.',
+        icon: Icons.warning_amber_rounded,
+        error: true,
       );
+      return;
+    }
 
-      await Future.delayed(const Duration(milliseconds: 500));
+    setState(() {
+      isLoading = true;
+      statusMessage = null;
+    });
+
+    try {
+      const baseUrl = 'http://10.0.2.2:8000/api';
+
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/login'),
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({'email': email, 'password': password}),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      final data = jsonDecode(response.body);
 
       if (!mounted) return;
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const DashboardPage(),
-        ),
-      );
-    } else {
+      if (response.statusCode == 200 &&
+          data is Map &&
+          data['success'] == true) {
+        showStatus(
+          'Login berhasil. Mengalihkan ke dashboard...',
+          icon: Icons.check_circle_outline,
+        );
+
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        if (!mounted) return;
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const DashboardPage()),
+        );
+      } else {
+        showStatus(
+          data is Map
+              ? (data['message']?.toString() ??
+                    'Login gagal. Periksa email dan kata sandi.')
+              : 'Login gagal. Periksa email dan kata sandi.',
+          icon: Icons.error_outline,
+          error: true,
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
       showStatus(
-        data is Map
-            ? (data['message']?.toString() ??
-                'Login gagal. Periksa email dan kata sandi.')
-            : 'Login gagal. Periksa email dan kata sandi.',
-        icon: Icons.error_outline,
+        'Tidak dapat terhubung ke server. Periksa koneksi dan coba lagi.',
+        icon: Icons.wifi_off,
         error: true,
       );
-    }
-  } catch (e) {
-    if (!mounted) return;
-
-    showStatus(
-      'Tidak dapat terhubung ke server. Periksa koneksi dan coba lagi.',
-      icon: Icons.wifi_off,
-      error: true,
-    );
-  } finally {
-    if (mounted) {
-      setState(() {
-        isLoading = false;
-      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
-}
 
-  
-void triggerForgotFeedback() {
-  final controller = TextEditingController(
-    text: emailController.text.trim(),
-  );
+  void triggerForgotFeedback() {
+    final controller = TextEditingController(text: emailController.text.trim());
 
-  showDialog(
-    context: context,
-    builder: (dialogContext) {
-      bool isLoading = false;
-      String? message;
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        bool isLoading = false;
+        String? message;
 
-      return StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            title: const Text('Reset Password'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Masukkan email akun kamu. '
-                  'Kami akan mengirim tautan reset password.',
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: controller,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Alamat email',
-                    hintText: 'nama@email.com',
-                    border: OutlineInputBorder(),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Reset Password'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Masukkan email akun kamu. '
+                    'Kami akan mengirim tautan reset password.',
                   ),
-                ),
-                if (message != null) ...[
-                  const SizedBox(height: 12),
-                  Text(message!),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      labelText: 'Alamat email',
+                      hintText: 'nama@email.com',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  if (message != null) ...[
+                    const SizedBox(height: 12),
+                    Text(message!),
+                  ],
                 ],
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: isLoading
-                    ? null
-                    : () => Navigator.pop(dialogContext),
-                child: const Text('Batal'),
               ),
-              ElevatedButton(
-                onPressed: isLoading
-                    ? null
-                    : () async {
-                        final email = controller.text.trim();
+              actions: [
+                TextButton(
+                  onPressed: isLoading
+                      ? null
+                      : () => Navigator.pop(dialogContext),
+                  child: const Text('Batal'),
+                ),
+                ElevatedButton(
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          final email = controller.text.trim();
 
-                        if (!email.contains('@') ||
-                            !email.contains('.')) {
-                          setDialogState(() {
-                            message = 'Masukkan alamat email yang valid.';
-                          });
-                          return;
-                        }
-
-                        setDialogState(() {
-                          isLoading = true;
-                          message = null;
-                        });
-
-                        try {
-                          // Ganti URL ini jika base URL API
-                          // project kamu disimpan di tempat lain.
-                          final uri = Uri.parse(
-                            'http://10.0.2.2:8000/api/forgot-password',
-                          );
-
-                          final response = await
-                              http.post(
-                            uri,
-                            headers: {
-                              'Accept': 'application/json',
-                              'Content-Type': 'application/json',
-                            },
-                            body: jsonEncode({
-                              'email': email,
-                            }),
-                          );
-
-                          final data = jsonDecode(response.body);
-
-                          if (!dialogContext.mounted) return;
-
-                          setDialogState(() {
-                            if (response.statusCode >= 200 &&
-                                response.statusCode < 300) {
-                              message = data['message']?.toString() ??
-                                  'Jika email terdaftar, '
-                                  'tautan reset akan dikirim.';
-                            } else {
-                              message = data['message']?.toString() ??
-                                  'Permintaan gagal. Coba lagi.';
-                            }
-                          });
-                        } catch (_) {
-                          if (!dialogContext.mounted) return;
-
-                          setDialogState(() {
-                            message =
-                                'Tidak dapat terhubung ke server. '
-                                'Periksa koneksi dan alamat API.';
-                          });
-                        } finally {
-                          if (dialogContext.mounted) {
+                          if (!email.contains('@') || !email.contains('.')) {
                             setDialogState(() {
-                              isLoading = false;
+                              message = 'Masukkan alamat email yang valid.';
                             });
+                            return;
                           }
-                        }
-                      },
-                child: isLoading
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Text('Kirim Tautan'),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  ).then((_) => controller.dispose());
-}
 
+                          setDialogState(() {
+                            isLoading = true;
+                            message = null;
+                          });
+
+                          try {
+                            // Ganti URL ini jika base URL API
+                            // project kamu disimpan di tempat lain.
+                            final uri = Uri.parse(
+                              'http://10.0.2.2:8000/api/forgot-password',
+                            );
+
+                            final response = await http.post(
+                              uri,
+                              headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                              },
+                              body: jsonEncode({'email': email}),
+                            );
+
+                            final data = jsonDecode(response.body);
+
+                            if (!dialogContext.mounted) return;
+
+                            setDialogState(() {
+                              if (response.statusCode >= 200 &&
+                                  response.statusCode < 300) {
+                                message =
+                                    data['message']?.toString() ??
+                                    'Jika email terdaftar, '
+                                        'tautan reset akan dikirim.';
+                              } else {
+                                message =
+                                    data['message']?.toString() ??
+                                    'Permintaan gagal. Coba lagi.';
+                              }
+                            });
+                          } catch (_) {
+                            if (!dialogContext.mounted) return;
+
+                            setDialogState(() {
+                              message =
+                                  'Tidak dapat terhubung ke server. '
+                                  'Periksa koneksi dan alamat API.';
+                            });
+                          } finally {
+                            if (dialogContext.mounted) {
+                              setDialogState(() {
+                                isLoading = false;
+                              });
+                            }
+                          }
+                        },
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Kirim Tautan'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((_) => controller.dispose());
+  }
 
   void triggerHelpFeedback() {
     showStatus(
@@ -690,7 +675,6 @@ void triggerForgotFeedback() {
                   ),
                 ),
 
-
                 // Status message
                 if (statusMessage != null) ...[
                   const SizedBox(height: 12),
@@ -742,26 +726,21 @@ void triggerForgotFeedback() {
                     children: [
                       Text(
                         'Belum memiliki akun? ',
-                        style: jakarta(
-                          size: 12,
-                          color: secondary,
-                        ),
+                        style: jakarta(size: 12, color: secondary),
                       ),
                       TextButton(
                         onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  const DaftarAkunPage(),
+                              builder: (context) => const DaftarAkunPage(),
                             ),
                           );
                         },
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: const Size(0, 0),
-                          tapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         child: Text(
                           'Daftar di sini',

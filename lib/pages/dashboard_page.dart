@@ -8,6 +8,8 @@ import 'histori_page.dart';
 import 'informasi_pt_page.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
+import '../services/api_service.dart';
+import '../models/gold_price.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -68,10 +70,7 @@ class DashboardPage extends StatelessWidget {
                 color: surfaceContainer,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
-                Icons.trending_up,
-                color: primary,
-              ),
+              child: const Icon(Icons.trending_up, color: primary),
             ),
             const SizedBox(width: 10),
             Column(
@@ -79,10 +78,7 @@ class DashboardPage extends StatelessWidget {
               children: [
                 Text(
                   'EQUITY PULSE',
-                  style: jakarta(
-                    size: 16,
-                    weight: FontWeight.w700,
-                  ),
+                  style: jakarta(size: 16, weight: FontWeight.w700),
                 ),
                 Text(
                   'MARKET INTELLIGENCE',
@@ -98,47 +94,44 @@ class DashboardPage extends StatelessWidget {
         ),
         actions: [
           IconButton(
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const NotificationsScreen(),
-      ),
-    );
-  },
-  icon: const Icon(
-    Icons.notifications_none,
-    color: textPrimary,
-  ),
-),
-          Padding(
-  padding: const EdgeInsets.only(right: 12),
-  child: InkWell(
-    borderRadius: BorderRadius.circular(30),
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const ProfileScreen(),
-        ),
-      );
-    },
-    child: CircleAvatar(
-      radius: 18,
-      backgroundColor: surfaceContainer,
-      child: Text(
-        'A',
-        style: jakarta(
-          size: 13,
-          weight: FontWeight.w700,
-          color: primary,
-           ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.notifications_none, color: textPrimary),
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(30),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileScreen(),
+                  ),
+                );
+              },
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: surfaceContainer,
+                child: Text(
+                  'A',
+                  style: jakarta(
+                    size: 13,
+                    weight: FontWeight.w700,
+                    color: primary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
-    ),
-  ],
-),
       // ============================================================
       // DRAWER
       // ============================================================
@@ -147,7 +140,7 @@ class DashboardPage extends StatelessWidget {
       // ============================================================
       // BODY
       // ============================================================
-                 body: SafeArea(
+      body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -155,11 +148,19 @@ class DashboardPage extends StatelessWidget {
             children: [
               _buildWelcome(),
               const SizedBox(height: 16),
+
+              // LGD
               _buildMarketStatus(),
               const SizedBox(height: 16),
               _buildPriceCards(),
+
+              const SizedBox(height: 24),
+
+              // HSI
+              _buildHsiStatus(),
               const SizedBox(height: 16),
-              _buildMarketSummary(),
+              _buildHsiPriceCards(),
+
               const SizedBox(height: 16),
               _buildQuickMenu(context),
               const SizedBox(height: 16),
@@ -179,169 +180,157 @@ class DashboardPage extends StatelessWidget {
   // DRAWER
   // ============================================================
   // ============================================================
-// BOTTOM NAVIGATION
-// ============================================================
+  // BOTTOM NAVIGATION
+  // ============================================================
 
-Widget _buildBottomNavigation(BuildContext context) {
-  final items = [
-    (
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home,
-      label: 'Dashboard',
-    ),
-    (
-      icon: Icons.newspaper_outlined,
-      activeIcon: Icons.newspaper,
-      label: 'Berita',
-    ),
-    (
-      icon: Icons.show_chart,
-      activeIcon: Icons.show_chart,
-      label: 'Harga',
-    ),
-    (
-      icon: Icons.table_chart_outlined,
-      activeIcon: Icons.table_chart,
-      label: 'Pivot',
-    ),
-    (
-      icon: Icons.calculate_outlined,
-      activeIcon: Icons.calculate,
-      label: 'Kalkulator',
-    ),
-    (
-      icon: Icons.history_outlined,
-      activeIcon: Icons.history,
-      label: 'Histori',
-    ),
-    (
-      icon: Icons.apartment_outlined,
-      activeIcon: Icons.apartment,
-      label: 'Profil PT',
-    ),
-  ];
-
-  return Container(
-    height: 72,
-    decoration: BoxDecoration(
-      color: Colors.white,
-      border: Border(
-        top: BorderSide(color: Colors.grey.shade200),
+  Widget _buildBottomNavigation(BuildContext context) {
+    final items = [
+      (icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Dashboard'),
+      (
+        icon: Icons.newspaper_outlined,
+        activeIcon: Icons.newspaper,
+        label: 'Berita',
       ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.04),
-          blurRadius: 10,
-          offset: const Offset(0, -3),
-        ),
-      ],
-    ),
-    child: SafeArea(
-      top: false,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: List.generate(items.length, (index) {
-            final active = index == 0;
+      (icon: Icons.show_chart, activeIcon: Icons.show_chart, label: 'Harga'),
+      (
+        icon: Icons.table_chart_outlined,
+        activeIcon: Icons.table_chart,
+        label: 'Pivot',
+      ),
+      (
+        icon: Icons.calculate_outlined,
+        activeIcon: Icons.calculate,
+        label: 'Kalkulator',
+      ),
+      (
+        icon: Icons.history_outlined,
+        activeIcon: Icons.history,
+        label: 'Histori',
+      ),
+      (
+        icon: Icons.apartment_outlined,
+        activeIcon: Icons.apartment,
+        label: 'Profil PT',
+      ),
+    ];
 
-            return SizedBox(
-              width: 82,
-              child: InkWell(
-                onTap: () {
-                  switch (index) {
-                    case 0:
-                      break;
+    return Container(
+      height: 72,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.grey.shade200)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: List.generate(items.length, (index) {
+              final active = index == 0;
 
-                    case 1:
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const BeritaPage(),
-                        ),
-                      );
-                      break;
+              return SizedBox(
+                width: 82,
+                child: InkWell(
+                  onTap: () {
+                    switch (index) {
+                      case 0:
+                        break;
 
-                    case 2:
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HargaEmasPage(),
-                        ),
-                      );
-                      break;
+                      case 1:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BeritaPage(),
+                          ),
+                        );
+                        break;
 
-                    case 3:
-                     Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PivotPointPage(),
-                        ),
-                      );
-                      break;
+                      case 2:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HargaEmasPage(),
+                          ),
+                        );
+                        break;
 
-                    case 4:
-                     Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const KalkulatorPage(),
-                        ),
-                      );
-                      break;
+                      case 3:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PivotPointPage(),
+                          ),
+                        );
+                        break;
 
-                    case 5:
-                     Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HistoriPage(),
-                        ),
-                      );
-                      break;
+                      case 4:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const KalkulatorPage(),
+                          ),
+                        );
+                        break;
 
-                    case 6:
-                     Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const InformasiPtPage(),
-                        ),
-                      );
-                      break;
-                  }
-                },
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      active
-                          ? items[index].activeIcon
-                          : items[index].icon,
-                      size: 21,
-                      color: active
-                          ? const Color(0xFF111827)
-                          : const Color(0xFF9CA3AF),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      items[index].label,
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: active
-                            ? FontWeight.w800
-                            : FontWeight.w600,
+                      case 5:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HistoriPage(),
+                          ),
+                        );
+                        break;
+
+                      case 6:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const InformasiPtPage(),
+                          ),
+                        );
+                        break;
+                    }
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        active ? items[index].activeIcon : items[index].icon,
+                        size: 21,
                         color: active
                             ? const Color(0xFF111827)
                             : const Color(0xFF9CA3AF),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        items[index].label,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: active
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                          color: active
+                              ? const Color(0xFF111827)
+                              : const Color(0xFF9CA3AF),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildDrawer(BuildContext context) {
     return Drawer(
@@ -353,21 +342,12 @@ Widget _buildBottomNavigation(BuildContext context) {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    primaryContainer,
-                    primary,
-                  ],
-                ),
+                gradient: LinearGradient(colors: [primaryContainer, primary]),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.trending_up,
-                    color: Colors.white,
-                    size: 36,
-                  ),
+                  const Icon(Icons.trending_up, color: Colors.white, size: 36),
                   const SizedBox(height: 10),
                   Text(
                     'EWF GOLD HUB',
@@ -412,9 +392,7 @@ Widget _buildBottomNavigation(BuildContext context) {
 
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const BeritaPage(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const BeritaPage()),
                 );
               },
             ),
@@ -423,19 +401,19 @@ Widget _buildBottomNavigation(BuildContext context) {
             // INFORMASI PT
             // ========================================================
             _drawerItem(
-  icon: Icons.apartment_outlined,
-  title: 'Informasi PT',
-  hasArrow: true,
-  onTap: () {
-    Navigator.pop(context);
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const InformasiPtPage(),
-      ),
-    );
-  },
-),
+              icon: Icons.apartment_outlined,
+              title: 'Informasi PT',
+              hasArrow: true,
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const InformasiPtPage(),
+                  ),
+                );
+              },
+            ),
 
             // ========================================================
             // DATA HARGA EMAS
@@ -479,37 +457,35 @@ Widget _buildBottomNavigation(BuildContext context) {
             // KALKULATOR
             // ========================================================
             _drawerItem(
-  icon: Icons.calculate_outlined,
-  title: 'Kalkulator',
-  hasArrow: true,
-  onTap: () {
-    Navigator.pop(context);
+              icon: Icons.calculate_outlined,
+              title: 'Kalkulator',
+              hasArrow: true,
+              onTap: () {
+                Navigator.pop(context);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const KalkulatorPage(),
-      ),
-    );
-  },
-),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const KalkulatorPage(),
+                  ),
+                );
+              },
+            ),
             // ========================================================
             // HISTORI
             // ========================================================
             _drawerItem(
-  icon: Icons.history,
-  title: 'Histori',
-  hasArrow: true,
-  onTap: () {
-    Navigator.pop(context);
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const HistoriPage(),
-      ),
-    );
-  },
-),
+              icon: Icons.history,
+              title: 'Histori',
+              hasArrow: true,
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HistoriPage()),
+                );
+              },
+            ),
 
             const Spacer(),
             const Divider(),
@@ -544,10 +520,7 @@ Widget _buildBottomNavigation(BuildContext context) {
     VoidCallback? onTap,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 2,
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: selected ? surfaceContainer : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
@@ -562,18 +535,12 @@ Widget _buildBottomNavigation(BuildContext context) {
           title,
           style: jakarta(
             size: 13,
-            weight: selected
-                ? FontWeight.w700
-                : FontWeight.w500,
+            weight: selected ? FontWeight.w700 : FontWeight.w500,
             color: selected ? primary : textPrimary,
           ),
         ),
         trailing: hasArrow
-            ? const Icon(
-                Icons.chevron_right,
-                size: 18,
-                color: textSecondary,
-              )
+            ? const Icon(Icons.chevron_right, size: 18, color: textSecondary)
             : null,
         onTap: onTap,
       ),
@@ -588,21 +555,7 @@ Widget _buildBottomNavigation(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Dashboard',
-          style: jakarta(
-            size: 24,
-            weight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Gold Information & Calculation Platform',
-          style: jakarta(
-            size: 13,
-            color: textSecondary,
-          ),
-        ),
+        Text('Dashboard', style: jakarta(size: 24, weight: FontWeight.w700)),
       ],
     );
   }
@@ -612,16 +565,107 @@ Widget _buildBottomNavigation(BuildContext context) {
   // ============================================================
 
   Widget _buildMarketStatus() {
+    Widget marketCard({
+      required String name,
+      required String symbol,
+      required IconData icon,
+    }) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [primaryContainer, primary]),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: Colors.white, size: 25),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: jakarta(
+                      size: 18,
+                      weight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    symbol,
+                    style: mono(
+                      size: 12,
+                      weight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: green,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    'ACTIVE',
+                    style: jakarta(
+                      size: 10,
+                      weight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    
+return Column(
+  children: [
+    marketCard(
+      name: 'LGD',
+      symbol: 'XAU / USD',
+      icon: Icons.monetization_on_outlined,
+    ),
+  ],
+);
+}
+
+
+  Widget _buildHsiStatus() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            primaryContainer,
-            primary,
-          ],
-        ),
+        gradient: const LinearGradient(colors: [primaryContainer, primary]),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -633,11 +677,7 @@ Widget _buildBottomNavigation(BuildContext context) {
               color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.monetization_on_outlined,
-              color: Colors.white,
-              size: 25,
-            ),
+            child: const Icon(Icons.show_chart, color: Colors.white, size: 25),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -645,18 +685,18 @@ Widget _buildBottomNavigation(BuildContext context) {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'PASAR EMAS AKTIF',
+                  'HSI',
                   style: jakarta(
-                    size: 11,
+                    size: 18,
                     weight: FontWeight.w700,
-                    color: Colors.white70,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'XAU / USD',
+                  'HANG SENG INDEX',
                   style: mono(
-                    size: 18,
+                    size: 12,
                     weight: FontWeight.w700,
                     color: Colors.white,
                   ),
@@ -665,38 +705,67 @@ Widget _buildBottomNavigation(BuildContext context) {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 6,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: green,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  'ACTIVE',
-                  style: jakarta(
-                    size: 10,
-                    weight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
+            child: Text(
+              '• ACTIVE',
+              style: jakarta(
+                size: 10,
+                weight: FontWeight.w700,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildHsiPriceCards() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cards = [
+          _priceCard('OPEN', '—', 'Poin indeks', Icons.login),
+          _priceCard(
+            'HIGH',
+            '—',
+            'Poin indeks',
+            Icons.arrow_upward,
+            positive: true,
+          ),
+          _priceCard('LOW', '—', 'Poin indeks', Icons.arrow_downward),
+          _priceCard(
+            'CLOSE',
+            '—',
+            'Poin indeks',
+            Icons.flag_outlined,
+            positive: true,
+          ),
+        ];
+
+        return Column(
+          children: [
+            Row(
+              children: [
+                Expanded(child: cards[0]),
+                const SizedBox(width: 12),
+                Expanded(child: cards[1]),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: cards[2]),
+                const SizedBox(width: 12),
+                Expanded(child: cards[3]),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -705,102 +774,115 @@ Widget _buildBottomNavigation(BuildContext context) {
   // ============================================================
 
   Widget _buildPriceCards() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 700;
-
-        if (isWide) {
-          return Row(
-            children: [
-              Expanded(
-                child: _priceCard(
-                  'HARGA PEMBUKAAN SESI',
-                  '4,461.46',
-                  'USD/oz',
-                  Icons.login,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _priceCard(
-                  'TERTINGGI HARIAN',
-                  '4,471.77',
-                  'USD/oz',
-                  Icons.arrow_upward,
-                  positive: true,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _priceCard(
-                  'TERENDAH HARIAN',
-                  '4,396.48',
-                  'USD/oz',
-                  Icons.arrow_downward,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _priceCard(
-                  'PENYELESAIAN TERAKHIR',
-                  '4,447.13',
-                  'USD/oz',
-                  Icons.flag_outlined,
-                  positive: true,
-                ),
-              ),
-            ],
+    return FutureBuilder<List<GoldPrice>>(
+      future: ApiService.getGoldPrices(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: CircularProgressIndicator(),
+            ),
           );
         }
 
-        return Column(
-          children: [
-            Row(
+        if (snapshot.hasError) {
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  const Text('Gagal memuat harga emas.'),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const DashboardPage(),
+                        ),
+                      );
+                    },
+                    child: const Text('Coba lagi'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final prices = snapshot.data ?? [];
+
+        if (prices.isEmpty) {
+          return const Text('Belum ada data harga emas.');
+        }
+
+        final gold = prices.first;
+
+        String formatPrice(double? value) {
+          if (value == null) return '-';
+          return value.toStringAsFixed(2);
+        }
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 700;
+
+            final cards = [
+              _priceCard('OPEN', formatPrice(gold.open), 'USD/oz', Icons.login),
+              _priceCard(
+                'HIGH',
+                formatPrice(gold.high),
+                'USD/oz',
+                Icons.arrow_upward,
+                positive: true,
+              ),
+              _priceCard(
+                'LOW',
+                formatPrice(gold.low),
+                'USD/oz',
+                Icons.arrow_downward,
+              ),
+              _priceCard(
+                'CLOSE',
+                formatPrice(gold.close ?? gold.price),
+                'USD/oz',
+                Icons.flag_outlined,
+                positive: true,
+              ),
+            ];
+
+            if (isWide) {
+              return Row(
+                children: [
+                  for (int i = 0; i < cards.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 12),
+                    Expanded(child: cards[i]),
+                  ],
+                ],
+              );
+            }
+
+            return Column(
               children: [
-                Expanded(
-                  child: _priceCard(
-                    'HARGA PEMBUKAAN SESI',
-                    '4,461.46',
-                    'USD/oz',
-                    Icons.login,
-                  ),
+                Row(
+                  children: [
+                    Expanded(child: cards[0]),
+                    const SizedBox(width: 12),
+                    Expanded(child: cards[1]),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _priceCard(
-                    'TERTINGGI HARIAN',
-                    '4,471.77',
-                    'USD/oz',
-                    Icons.arrow_upward,
-                    positive: true,
-                  ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(child: cards[2]),
+                    const SizedBox(width: 12),
+                    Expanded(child: cards[3]),
+                  ],
                 ),
               ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _priceCard(
-                    'TERENDAH HARIAN',
-                    '4,396.48',
-                    'USD/oz',
-                    Icons.arrow_downward,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _priceCard(
-                    'PENYELESAIAN TERAKHIR',
-                    '4,447.13',
-                    'USD/oz',
-                    Icons.flag_outlined,
-                    positive: true,
-                  ),
-                ),
-              ],
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -831,11 +913,7 @@ Widget _buildBottomNavigation(BuildContext context) {
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                size: 18,
-                color: positive ? green : primary,
-              ),
+              Icon(icon, size: 18, color: positive ? green : primary),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -850,21 +928,9 @@ Widget _buildBottomNavigation(BuildContext context) {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            value,
-            style: mono(
-              size: 20,
-              weight: FontWeight.w700,
-            ),
-          ),
+          Text(value, style: mono(size: 20, weight: FontWeight.w700)),
           const SizedBox(height: 2),
-          Text(
-            unit,
-            style: jakarta(
-              size: 10,
-              color: textSecondary,
-            ),
-          ),
+          Text(unit, style: jakarta(size: 10, color: textSecondary)),
         ],
       ),
     );
@@ -874,93 +940,6 @@ Widget _buildBottomNavigation(BuildContext context) {
   // MARKET SUMMARY
   // ============================================================
 
-  Widget _buildMarketSummary() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: const [
-          BoxShadow(
-            blurRadius: 8,
-            offset: Offset(0, 2),
-            color: Color(0x10000000),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Market Overview',
-            style: jakarta(
-              size: 16,
-              weight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Ringkasan pergerakan harga emas',
-            style: jakarta(
-              size: 12,
-              color: textSecondary,
-            ),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 150,
-            child: CustomPaint(
-              painter: _ChartPainter(),
-              child: const SizedBox.expand(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '31 Agu',
-                style: mono(
-                  size: 10,
-                  color: textSecondary,
-                ),
-              ),
-              Text(
-                '01 Sep',
-                style: mono(
-                  size: 10,
-                  color: textSecondary,
-                ),
-              ),
-              Text(
-                '02 Sep',
-                style: mono(
-                  size: 10,
-                  color: textSecondary,
-                ),
-              ),
-              Text(
-                '03 Sep',
-                style: mono(
-                  size: 10,
-                  color: textSecondary,
-                ),
-              ),
-              Text(
-                '04 Sep',
-                style: mono(
-                  size: 10,
-                  color: textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   // ============================================================
   // QUICK MENU
   // ============================================================
@@ -969,13 +948,7 @@ Widget _buildBottomNavigation(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Akses Cepat',
-          style: jakarta(
-            size: 16,
-            weight: FontWeight.w700,
-          ),
-        ),
+        Text('Akses Cepat', style: jakarta(size: 16, weight: FontWeight.w700)),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -995,25 +968,22 @@ Widget _buildBottomNavigation(BuildContext context) {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: _quickButton(
-                Icons.calculate_outlined,
-                'Kalkulator',
-              ),
+              child: _quickButton(Icons.calculate_outlined, 'Kalkulator'),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _quickButton(
-  Icons.history,
-  'Histori',
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const HistoriPage(),
-      ),
-    );
-  },
-),
+                Icons.history,
+                'Histori',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HistoriPage(),
+                    ),
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -1025,41 +995,25 @@ Widget _buildBottomNavigation(BuildContext context) {
   // QUICK BUTTON
   // ============================================================
 
-  Widget _quickButton(
-    IconData icon,
-    String title, {
-    VoidCallback? onTap,
-  }) {
+  Widget _quickButton(IconData icon, String title, {VoidCallback? onTap}) {
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: 16,
-          horizontal: 8,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
           color: white,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: surfaceContainer,
-          ),
+          border: Border.all(color: surfaceContainer),
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              color: primary,
-              size: 25,
-            ),
+            Icon(icon, color: primary, size: 25),
             const SizedBox(height: 7),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: jakarta(
-                size: 11,
-                weight: FontWeight.w600,
-              ),
+              style: jakarta(size: 11, weight: FontWeight.w600),
             ),
           ],
         ),
@@ -1082,11 +1036,7 @@ Widget _buildBottomNavigation(BuildContext context) {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.info_outline,
-            color: primary,
-            size: 22,
-          ),
+          const Icon(Icons.info_outline, color: primary, size: 22),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -1094,18 +1044,12 @@ Widget _buildBottomNavigation(BuildContext context) {
               children: [
                 Text(
                   'Informasi Data',
-                  style: jakarta(
-                    size: 13,
-                    weight: FontWeight.w700,
-                  ),
+                  style: jakarta(size: 13, weight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Data harga emas ditampilkan berdasarkan data yang tersedia pada sistem. Sumber data: News Maker.',
-                  style: jakarta(
-                    size: 11,
-                    color: textSecondary,
-                  ),
+                  style: jakarta(size: 11, color: textSecondary),
                 ),
               ],
             ),
@@ -1113,97 +1057,5 @@ Widget _buildBottomNavigation(BuildContext context) {
         ],
       ),
     );
-  }
-}
-
-// ============================================================
-// CHART PAINTER
-// ============================================================
-
-class _ChartPainter extends CustomPainter {
-  @override
-  void paint(
-    Canvas canvas,
-    Size size,
-  ) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    final fillPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = const Color(0xFF785600).withValues(alpha: 0.08);
-
-    final points = [
-      Offset(0, size.height * 0.68),
-      Offset(size.width * 0.10, size.height * 0.72),
-      Offset(size.width * 0.20, size.height * 0.48),
-      Offset(size.width * 0.30, size.height * 0.62),
-      Offset(size.width * 0.40, size.height * 0.36),
-      Offset(size.width * 0.50, size.height * 0.43),
-      Offset(size.width * 0.60, size.height * 0.24),
-      Offset(size.width * 0.70, size.height * 0.38),
-      Offset(size.width * 0.80, size.height * 0.20),
-      Offset(size.width * 0.90, size.height * 0.30),
-      Offset(size.width, size.height * 0.14),
-    ];
-
-    final path = Path();
-
-    path.moveTo(
-      points.first.dx,
-      points.first.dy,
-    );
-
-    for (int i = 1; i < points.length; i++) {
-      path.lineTo(
-        points[i].dx,
-        points[i].dy,
-      );
-    }
-
-    final fillPath = Path.from(path)
-      ..lineTo(
-        size.width,
-        size.height,
-      )
-      ..lineTo(
-        0,
-        size.height,
-      )
-      ..close();
-
-    canvas.drawPath(
-      fillPath,
-      fillPaint,
-    );
-
-    paint.color = const Color(0xFF785600);
-
-    canvas.drawPath(
-      path,
-      paint,
-    );
-
-    final gridPaint = Paint()
-      ..color = const Color(0xFFDCE9FF)
-      ..strokeWidth = 1;
-
-    for (int i = 1; i < 4; i++) {
-      final y = size.height * i / 4;
-
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y),
-        gridPaint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(
-    covariant CustomPainter oldDelegate,
-  ) {
-    return false;
   }
 }

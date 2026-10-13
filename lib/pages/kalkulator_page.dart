@@ -22,6 +22,10 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
 
   int selectedTab = 0;
 
+  // Histori sementara di sisi frontend (selama halaman masih aktif).
+  bool _showHistory = false;
+  final List<Map<String, dynamic>> _calculationHistory = [];
+
   // ============================================================
   // DIGITAL
   // ============================================================
@@ -284,12 +288,258 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                           ? _buildDigitalSection()
                           : _buildFisikSection(),
                     ),
+                    const SizedBox(height: 16),
+                    _buildHistorySection(),
                   ],
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // FRONTEND CALCULATION HISTORY
+  // ============================================================
+
+  void _saveCalculationToHistory() {
+    final now = DateTime.now();
+    final Map<String, dynamic> item;
+
+    if (selectedTab == 0) {
+      item = {
+        'type': 'Emas Digital',
+        'date': now,
+        'details': 'Beli ${formatRupiah(parseNumber(digitalBeliController.text))} • '
+            'Jual ${formatRupiah(parseNumber(digitalJualController.text))} • '
+            'Lot ${digitalLotController.text}',
+        'result': formatRupiah(digitalNet),
+        'positive': digitalNet >= 0,
+      };
+    } else {
+      item = {
+        'type': 'Emas Fisik',
+        'date': now,
+        'details': 'Modal ${formatRupiah(parseNumber(fisikModalController.text))} • '
+            'Kurs ${formatNumber(parseNumber(fisikKursController.text))} • '
+            'ROI ${fisikRoi.toStringAsFixed(2)}%',
+        'result': formatRupiah(fisikCuan),
+        'positive': fisikCuan >= 0,
+      };
+    }
+
+    setState(() {
+      _calculationHistory.insert(0, item);
+      _showHistory = true;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Perhitungan ditambahkan ke histori sesi ini.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Widget _buildHistorySection() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5EAF2)),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => setState(() => _showHistory = !_showHistory),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF7BD48).withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.history_rounded,
+                        color: Color(0xFF785600)),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Histori Perhitungan',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF0B1C30),
+                            )),
+                        const SizedBox(height: 3),
+                        Text('${_calculationHistory.length} perhitungan di sesi ini',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              color: const Color(0xFF718096),
+                            )),
+                      ],
+                    ),
+                  ),
+                  Icon(_showHistory ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      color: const Color(0xFF64748B)),
+                ],
+              ),
+            ),
+          ),
+          if (_showHistory) ...[
+            const Divider(height: 1, color: Color(0xFFE5EAF2)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _saveCalculationToHistory,
+                      icon: const Icon(Icons.bookmark_add_outlined, size: 18),
+                      label: const Text('Simpan Perhitungan Saat Ini'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF213145),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  if (_calculationHistory.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 22),
+                      child: Column(
+                        children: [
+                          Icon(Icons.receipt_long_outlined,
+                              size: 34, color: Colors.blueGrey.shade200),
+                          const SizedBox(height: 8),
+                          Text('Belum ada histori perhitungan',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                color: const Color(0xFF718096),
+                              )),
+                          const SizedBox(height: 4),
+                          Text('Tekan tombol di atas untuk menyimpan hasil.',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                color: const Color(0xFF94A3B8),
+                              )),
+                        ],
+                      ),
+                    )
+                  else
+                    ..._calculationHistory.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final item = entry.value;
+                      final date = item['date'] as DateTime;
+                      final dateText = '${date.day.toString().padLeft(2, '0')}/'
+                          '${date.month.toString().padLeft(2, '0')}/${date.year} '
+                          '${date.hour.toString().padLeft(2, '0')}:'
+                          '${date.minute.toString().padLeft(2, '0')}';
+                      final isPositive = item['positive'] as bool;
+                      return Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8F9FC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFEDF0F5)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF7BD48).withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                item['type'] == 'Emas Digital'
+                                    ? Icons.show_chart_rounded
+                                    : Icons.savings_outlined,
+                                color: const Color(0xFF785600), size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(item['type'] as String,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF213145),
+                                      )),
+                                  const SizedBox(height: 3),
+                                  Text(dateText,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 10,
+                                        color: const Color(0xFF94A3B8),
+                                      )),
+                                  const SizedBox(height: 5),
+                                  Text(item['details'] as String,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 10,
+                                        color: const Color(0xFF64748B),
+                                      )),
+                                  const SizedBox(height: 5),
+                                  Text(item['result'] as String,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: isPositive
+                                            ? const Color(0xFF087443)
+                                            : const Color(0xFFB42318),
+                                      )),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Hapus histori',
+                              visualDensity: VisualDensity.compact,
+                              onPressed: () => setState(() => _calculationHistory.removeAt(index)),
+                              icon: const Icon(Icons.close_rounded, size: 18),
+                              color: const Color(0xFF94A3B8),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  if (_calculationHistory.isNotEmpty)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () => setState(() => _calculationHistory.clear()),
+                        icon: const Icon(Icons.delete_outline, size: 16),
+                        label: const Text('Hapus semua'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFB42318),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
