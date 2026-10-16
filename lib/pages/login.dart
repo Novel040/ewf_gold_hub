@@ -38,7 +38,6 @@ class _LoginPageState extends State<LoginPage> {
   static const Color onSurfaceVariant = Color(0xFF4F4535);
   static const Color secondary = Color(0xFF565E74);
 
-
   @override
   void dispose() {
     emailController.dispose();
@@ -77,6 +76,7 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
+      // Khusus Android Emulator yang mengakses server di laptop.
       const baseUrl = 'http://10.0.2.2:8000/api';
 
       final response = await http
@@ -90,7 +90,19 @@ class _LoginPageState extends State<LoginPage> {
           )
           .timeout(const Duration(seconds: 15));
 
-      final data = jsonDecode(response.body);
+      debugPrint('Login HTTP status: ${response.statusCode}');
+      debugPrint('Login response: ${response.body}');
+
+      final dynamic data;
+
+      try {
+        data = jsonDecode(response.body);
+      } on FormatException {
+        throw Exception(
+          'Respons server bukan JSON yang valid. '
+          'Periksa URL API dan konfigurasi backend.',
+        );
+      }
 
       if (!mounted) return;
 
@@ -111,23 +123,20 @@ class _LoginPageState extends State<LoginPage> {
           MaterialPageRoute(builder: (context) => const DashboardPage()),
         );
       } else {
-        showStatus(
-          data is Map
-              ? (data['message']?.toString() ??
-                    'Login gagal. Periksa email dan kata sandi.')
-              : 'Login gagal. Periksa email dan kata sandi.',
-          icon: Icons.error_outline,
-          error: true,
-        );
+        final message = data is Map
+            ? (data['message']?.toString() ??
+                  'Login gagal. Periksa email dan kata sandi.')
+            : 'Login gagal. Periksa konfigurasi API.';
+
+        showStatus(message, icon: Icons.error_outline, error: true);
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Login error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+
       if (!mounted) return;
 
-      showStatus(
-        'Tidak dapat terhubung ke server. Periksa koneksi dan coba lagi.',
-        icon: Icons.wifi_off,
-        error: true,
-      );
+      showStatus('Koneksi login gagal: $e', icon: Icons.wifi_off, error: true);
     } finally {
       if (mounted) {
         setState(() {
