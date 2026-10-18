@@ -12,16 +12,24 @@ import 'profile_screen.dart';
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
-  static const Color background = Color(0xFFF8F9FF);
+  static const Color background = Color(0xFFF8FAFC);
   static const Color white = Color(0xFFFFFFFF);
-  static const Color primary = Color(0xFF785600);
-  static const Color primaryContainer = Color(0xFF986D00);
-  static const Color surfaceContainer = Color(0xFFE5EEFF);
-  static const Color surfaceContainerLow = Color(0xFFEFF4FF);
-  static const Color textPrimary = Color(0xFF0B1C30);
-  static const Color textSecondary = Color(0xFF4F4535);
-  static const Color green = Color(0xFF006947);
-  static const Color red = Color(0xFFBA1A1A);
+
+  // Tema utama EWF
+  static const Color primary = Color(0xFFF58220);
+  static const Color primaryContainer = Color(0xFFD96812);
+
+  // Permukaan dan kartu
+  static const Color surfaceContainer = Color(0xFFFFE5CC);
+  static const Color surfaceContainerLow = Color(0xFFFFF3E8);
+
+  // Warna teks
+  static const Color textPrimary = Color(0xFF1F2937);
+  static const Color textSecondary = Color(0xFF64748B);
+
+  // Warna indikator pasar tetap dipertahankan
+  static const Color green = Color(0xFF00866A);
+  static const Color red = Color(0xFFD64545);
 
   TextStyle jakarta({
     double size = 14,
@@ -157,7 +165,7 @@ class DashboardPage extends StatelessWidget {
               _buildLiveChart(
                 title: 'HKK',
                 subtitle: 'Hang Seng Index Futures',
-                color: green,
+                color: primary,
               ),
               const SizedBox(height: 20),
               _buildLiveQuotesTable(),
@@ -304,9 +312,7 @@ class DashboardPage extends StatelessWidget {
                       Icon(
                         active ? items[index].activeIcon : items[index].icon,
                         size: 21,
-                        color: active
-                            ? const Color(0xFF111827)
-                            : const Color(0xFF9CA3AF),
+                        color: active ? primary : const Color(0xFF9CA3AF),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -316,9 +322,7 @@ class DashboardPage extends StatelessWidget {
                           fontWeight: active
                               ? FontWeight.w800
                               : FontWeight.w600,
-                          color: active
-                              ? const Color(0xFF111827)
-                              : const Color(0xFF9CA3AF),
+                          color: active ? primary : const Color(0xFF9CA3AF),
                         ),
                       ),
                     ],
@@ -660,7 +664,7 @@ class DashboardPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF4D6),
+                  color: const Color(0xFFFFF3E8),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -682,7 +686,7 @@ class DashboardPage extends StatelessWidget {
             width: double.infinity,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
-              color: const Color(0xFFFAFBFE),
+              color: const Color(0xFFFFFCF9),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: const Color(0xFFE7EBF2)),
             ),

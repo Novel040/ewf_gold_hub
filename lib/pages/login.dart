@@ -25,18 +25,20 @@ class _LoginPageState extends State<LoginPage> {
   IconData statusIcon = Icons.info_outline;
 
   // Warna dari desain Stitch
-  static const Color surface = Color(0xFFF8F9FF);
-  static const Color surfaceContainer = Color(0xFFE5EEFF);
-  static const Color surfaceContainerLow = Color(0xFFEFF4FF);
+
+  // Tema warna EWF
+  static const Color surface = Color(0xFFF8FAFC);
+  static const Color surfaceContainer = Color(0xFFFFE5CC);
+  static const Color surfaceContainerLow = Color(0xFFFFF3E8);
   static const Color surfaceContainerLowest = Color(0xFFFFFFFF);
 
-  static const Color primary = Color(0xFF785600);
-  static const Color primaryContainer = Color(0xFF986D00);
-  static const Color primaryFixed = Color(0xFFFFDEA6);
+  static const Color primary = Color(0xFFF58220);
+  static const Color primaryContainer = Color(0xFFD96812);
+  static const Color primaryFixed = Color(0xFFFFC58A);
 
-  static const Color onSurface = Color(0xFF0B1C30);
-  static const Color onSurfaceVariant = Color(0xFF4F4535);
-  static const Color secondary = Color(0xFF565E74);
+  static const Color onSurface = Color(0xFF1F2937);
+  static const Color onSurfaceVariant = Color(0xFF475569);
+  static const Color secondary = Color(0xFF64748B);
 
   @override
   void dispose() {
@@ -158,6 +160,8 @@ class _LoginPageState extends State<LoginPage> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
+              backgroundColor: surfaceContainerLowest,
+              iconColor: primary,
               title: const Text('Reset Password'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -190,6 +194,10 @@ class _LoginPageState extends State<LoginPage> {
                   child: const Text('Batal'),
                 ),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                  ),
                   onPressed: isLoading
                       ? null
                       : () async {
@@ -851,8 +859,8 @@ class _LoginPageState extends State<LoginPage> {
           TextButton(
             onPressed: triggerHelpFeedback,
             style: TextButton.styleFrom(
-              backgroundColor: const Color(0xFFD3E4FE),
-              foregroundColor: onSurface,
+              backgroundColor: surfaceContainer,
+              foregroundColor: primary,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),

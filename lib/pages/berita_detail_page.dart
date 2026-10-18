@@ -1,17 +1,39 @@
+
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart' as html_parser;
 
 class BeritaDetailPage extends StatelessWidget {
   final Map<String, dynamic> article;
 
-  const BeritaDetailPage({super.key, required this.article});
+  const BeritaDetailPage({
+    super.key,
+    required this.article,
+  });
+
+  // Tema warna EWF
+  static const Color background = Color(0xFFF8FAFC);
+  static const Color white = Color(0xFFFFFFFF);
+  static const Color primary = Color(0xFFF58220);
+  static const Color primaryDark = Color(0xFFD96812);
+  static const Color primaryLight = Color(0xFFFFE5CC);
+  static const Color textPrimary = Color(0xFF1F2937);
+  static const Color textSecondary = Color(0xFF475569);
+  static const Color muted = Color(0xFF64748B);
+  static const Color dividerColor = Color(0xFFE2E8F0);
 
   String _cleanContent(String raw) {
     final formatted = raw
-        .replaceAll(RegExp(r'</p\s*>', caseSensitive: false), '\n\n')
-        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
+        .replaceAll(
+          RegExp(r'</p\s*>', caseSensitive: false),
+          '\n\n',
+        )
+        .replaceAll(
+          RegExp(r'<br\s*/?>', caseSensitive: false),
+          '\n',
+        );
 
     final document = html_parser.parse(formatted);
+
     return (document.body?.text ?? formatted).trim();
   }
 
@@ -22,18 +44,24 @@ class BeritaDetailPage extends StatelessWidget {
     final source = article['source']?.toString() ?? 'Equity Pulse';
     final date = article['date']?.toString() ?? '';
     final image = article['image']?.toString() ?? '';
-    final content = _cleanContent(article['description']?.toString() ?? '');
+    final content = _cleanContent(
+      article['description']?.toString() ?? '',
+    );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F9FF),
-        foregroundColor: const Color(0xFF0B1C30),
+        backgroundColor: background,
+        foregroundColor: textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: const Text(
           'Detail Berita',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: textPrimary,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -41,6 +69,7 @@ class BeritaDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Gambar berita
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
               child: image.isNotEmpty
@@ -55,47 +84,59 @@ class BeritaDetailPage extends StatelessWidget {
                     )
                   : _imagePlaceholder(),
             ),
+
             const SizedBox(height: 20),
+
+            // Label kategori
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 6,
+              ),
               decoration: BoxDecoration(
-                color: const Color(0xFFE5EEFF),
+                color: primaryLight,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 category.toUpperCase(),
                 style: const TextStyle(
-                  color: Color(0xFF785600),
+                  color: primaryDark,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.4,
                 ),
               ),
             ),
+
             const SizedBox(height: 14),
+
+            // Judul berita
             Text(
               title,
               style: const TextStyle(
-                color: Color(0xFF0B1C30),
+                color: textPrimary,
                 fontSize: 24,
                 height: 1.35,
                 fontWeight: FontWeight.w800,
               ),
             ),
+
             const SizedBox(height: 14),
+
+            // Sumber dan tanggal
             Row(
               children: [
                 const Icon(
                   Icons.newspaper_outlined,
                   size: 17,
-                  color: Color(0xFF785600),
+                  color: primary,
                 ),
                 const SizedBox(width: 7),
                 Expanded(
                   child: Text(
                     source,
                     style: const TextStyle(
-                      color: Color(0xFF4F4535),
+                      color: textSecondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -104,7 +145,7 @@ class BeritaDetailPage extends StatelessWidget {
                 const Icon(
                   Icons.calendar_today_outlined,
                   size: 14,
-                  color: Color(0xFF565E74),
+                  color: muted,
                 ),
                 const SizedBox(width: 6),
                 Flexible(
@@ -112,34 +153,46 @@ class BeritaDetailPage extends StatelessWidget {
                     date,
                     textAlign: TextAlign.end,
                     style: const TextStyle(
-                      color: Color(0xFF565E74),
+                      color: muted,
                       fontSize: 11,
                     ),
                   ),
                 ),
               ],
             ),
+
             const SizedBox(height: 20),
-            const Divider(color: Color(0xFFDCE3EF)),
+
+            const Divider(color: dividerColor),
+
             const SizedBox(height: 16),
+
+            // Isi berita
             const Text(
               'Isi Berita',
               style: TextStyle(
-                color: Color(0xFF0B1C30),
+                color: textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
               ),
             ),
+
             const SizedBox(height: 12),
+
             SelectableText(
-              content.isNotEmpty ? content : 'Isi berita belum tersedia.',
+              content.isNotEmpty
+                  ? content
+                  : 'Isi berita belum tersedia.',
               style: const TextStyle(
-                color: Color(0xFF30394B),
+                color: textPrimary,
                 fontSize: 15,
                 height: 1.8,
               ),
             ),
+
             const SizedBox(height: 28),
+
+            // Tombol kembali
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -147,8 +200,8 @@ class BeritaDetailPage extends StatelessWidget {
                 icon: const Icon(Icons.arrow_back),
                 label: const Text('Kembali ke Daftar Berita'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF785600),
-                  side: const BorderSide(color: Color(0xFF785600)),
+                  foregroundColor: primary,
+                  side: const BorderSide(color: primary),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -166,12 +219,12 @@ class BeritaDetailPage extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: 220,
-      color: const Color(0xFFE5EEFF),
+      color: primaryLight,
       alignment: Alignment.center,
       child: const Icon(
         Icons.newspaper_outlined,
         size: 56,
-        color: Color(0xFF785600),
+        color: primary,
       ),
     );
   }

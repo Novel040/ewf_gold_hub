@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'berita_detail_page.dart';
 import 'package:http/http.dart' as http;
-
 import 'dashboard_page.dart';
 import 'harga_emas_page.dart';
 import 'pivot_point_page.dart';
@@ -18,6 +17,7 @@ class BeritaPage extends StatefulWidget {
 }
 
 class _BeritaPageState extends State<BeritaPage> {
+  
   int selectedCategory = 0;
   int selectedPage = 1;
 
@@ -202,7 +202,7 @@ class _BeritaPageState extends State<BeritaPage> {
                     const Text(
                       'EQUITY PULSE',
                       style: TextStyle(
-                        color: Color(0xFF0B1C30),
+                        color: Color(0xFF1F2937),
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.3,
@@ -248,7 +248,7 @@ class _BeritaPageState extends State<BeritaPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Color(0xFF4F4535),
+                    color: Color(0xFF475569),
                     fontSize: 9,
                     fontWeight: FontWeight.w500,
                   ),
@@ -295,7 +295,7 @@ class _BeritaPageState extends State<BeritaPage> {
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCE9FF),
+        color: const Color(0xFFFFE5CC),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -323,7 +323,7 @@ class _BeritaPageState extends State<BeritaPage> {
                   TextSpan(
                     text: 'Kilas Pasar: ',
                     style: TextStyle(
-                      color: Color(0xFF785600),
+                      color: Color(0xFFF58220),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -355,13 +355,13 @@ class _BeritaPageState extends State<BeritaPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFE5EEFF),
+              color: const Color(0xFFFFF3E8),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.feed_outlined, size: 16, color: Color(0xFF785600)),
+                Icon(Icons.feed_outlined, size: 16, color: Color(0xFFF58220)),
                 SizedBox(width: 5),
                 Text(
                   'COMMODITY INTELLIGENCE',
