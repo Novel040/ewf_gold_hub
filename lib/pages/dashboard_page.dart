@@ -1,3 +1,4 @@
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'berita_page.dart';
@@ -8,6 +9,8 @@ import 'histori_page.dart';
 import 'informasi_pt_page.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
+import '../widgets/live_quotes_table.dart';
+import '../widgets/latest_news_section.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -171,6 +174,8 @@ class DashboardPage extends StatelessWidget {
               _buildLiveQuotesTable(),
               const SizedBox(height: 16),
               _buildQuickMenu(context),
+              const SizedBox(height: 20),
+              const LatestNewsSection(),
               const SizedBox(height: 16),
               _buildInformationCard(),
             ],
@@ -573,47 +578,8 @@ class DashboardPage extends StatelessWidget {
     required String subtitle,
     required Color color,
   }) {
-    final List<double> prices = title.toUpperCase().contains('XUL')
-        ? const [
-            2310.0,
-            2312.5,
-            2308.5,
-            2315.0,
-            2313.0,
-            2318.5,
-            2316.0,
-            2322.0,
-            2319.5,
-            2325.0,
-            2321.5,
-            2328.0,
-            2324.0,
-            2330.0,
-            2327.5,
-            2334.0,
-          ]
-        : const [
-            19850.0,
-            19870.0,
-            19840.0,
-            19890.0,
-            19910.0,
-            19880.0,
-            19930.0,
-            19900.0,
-            19960.0,
-            19920.0,
-            19980.0,
-            19950.0,
-            20010.0,
-            19970.0,
-            20030.0,
-            20060.0,
-          ];
-
-    final double firstPrice = prices.first;
-    final double lastPrice = prices.last;
-    final bool isUp = lastPrice >= firstPrice;
+    final bool isGold = title.toUpperCase().contains('XUL');
+    final String symbol = isGold ? 'OANDA:XAUUSD' : 'TVC:HSI';
 
     return Container(
       width: double.infinity,
@@ -661,111 +627,25 @@ class DashboardPage extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3E8),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'DEMO',
-                  style: jakarta(
-                    size: 9,
-                    weight: FontWeight.w800,
-                    color: primary,
-                  ),
+              const Text(
+                'TRADINGVIEW',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF2962FF),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-
-          // Grafik harga demo.
-          Container(
-            height: 190,
-            width: double.infinity,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFFCF9),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFE7EBF2)),
-            ),
-            child: _DemoPriceChart(color: color, prices: prices),
-          ),
-
-          const SizedBox(height: 12),
-
-          // Ringkasan harga demo.
-          Row(
-            children: [
-              Expanded(child: _chartStat('PEMBUKAAN', firstPrice, color)),
-              Expanded(child: _chartStat('TERAKHIR', lastPrice, color)),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'PERUBAHAN',
-                      style: jakarta(
-                        size: 9,
-                        color: textSecondary,
-                        weight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${isUp ? '+' : ''}${((lastPrice - firstPrice) / firstPrice * 100).toStringAsFixed(2)}%',
-                      style: jakarta(
-                        size: 11,
-                        color: isUp
-                            ? const Color(0xFF00866A)
-                            : const Color(0xFFD64545),
-                        weight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.info_outline, size: 14, color: textSecondary),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Text(
-                  'Data simulasi untuk preview tampilan, bukan harga pasar live.',
-                  style: jakarta(size: 10, color: textSecondary),
-                ),
-              ),
-            ],
+          SizedBox(height: 320, child: _TradingViewChart(symbol: symbol)),
+          const SizedBox(height: 8),
+          Text(
+            'Grafik dari TradingView. Harga dan ketersediaan simbol mengikuti penyedia data.',
+            style: jakarta(size: 10, color: textSecondary),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _chartStat(String label, double value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: jakarta(
-            size: 9,
-            color: textSecondary,
-            weight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value.toStringAsFixed(1),
-          style: mono(size: 11, weight: FontWeight.w700),
-        ),
-      ],
     );
   }
 
@@ -774,75 +654,7 @@ class DashboardPage extends StatelessWidget {
   // ============================================================
 
   Widget _buildLiveQuotesTable() {
-    final rows = [
-      ('XUL', 'Loco London Gold', '—', '—', '—'),
-      ('HKK', 'Hang Seng Index Futures', '—', '—', '—'),
-    ];
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: surfaceContainer),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Live Quotes',
-            style: jakarta(size: 17, weight: FontWeight.w800),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Ringkasan instrumen XUL dan HKK',
-            style: jakarta(size: 11, color: textSecondary),
-          ),
-          const SizedBox(height: 14),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: WidgetStateProperty.all(surfaceContainerLow),
-              headingTextStyle: jakarta(size: 10, weight: FontWeight.w800),
-              dataTextStyle: mono(size: 11, weight: FontWeight.w600),
-              columnSpacing: 20,
-              horizontalMargin: 10,
-              columns: const [
-                DataColumn(label: Text('KODE')),
-                DataColumn(label: Text('INSTRUMEN')),
-                DataColumn(label: Text('LAST')),
-                DataColumn(label: Text('BID')),
-                DataColumn(label: Text('ASK')),
-              ],
-              rows: rows.map((row) {
-                return DataRow(
-                  cells: [
-                    DataCell(Text(row.$1)),
-                    DataCell(Text(row.$2)),
-                    DataCell(Text(row.$3)),
-                    DataCell(Text(row.$4)),
-                    DataCell(Text(row.$5)),
-                  ],
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Nilai “—” berarti data harga belum diterima dari API.',
-            style: jakarta(size: 10, color: textSecondary),
-          ),
-        ],
-      ),
-    );
+    return const LiveQuotesTable();
   }
 
   // ============================================================
@@ -975,6 +787,73 @@ class DashboardPage extends StatelessWidget {
 
   // Class painter harus berada di luar DashboardPage.
   // Pastikan semua kode DashboardPage berakhir di sini.
+}
+
+class _TradingViewChart extends StatefulWidget {
+  final String symbol;
+
+  const _TradingViewChart({required this.symbol});
+
+  @override
+  State<_TradingViewChart> createState() => _TradingViewChartState();
+}
+
+class _TradingViewChartState extends State<_TradingViewChart> {
+  late final WebViewController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0xFFFAFBFE))
+      ..loadHtmlString(_html);
+  }
+
+  String get _html =>
+      '''
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body, #chart {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart"></div>
+  <script src="https://s3.tradingview.com/tv.js"></script>
+  <script>
+    new TradingView.widget({
+      autosize: true,
+      symbol: "${widget.symbol}",
+      interval: "15",
+      timezone: "Asia/Jakarta",
+      theme: "light",
+      style: "1",
+      locale: "id",
+      enable_publishing: false,
+      hide_top_toolbar: false,
+      hide_legend: false,
+      save_image: false,
+      container_id: "chart"
+    });
+  </script>
+</body>
+</html>
+''';
+
+  @override
+  Widget build(BuildContext context) {
+    return WebViewWidget(controller: _controller);
+  }
 }
 
 class _DemoPriceChart extends StatelessWidget {

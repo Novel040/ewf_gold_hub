@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'berita_detail_page.dart';
@@ -17,7 +20,6 @@ class BeritaPage extends StatefulWidget {
 }
 
 class _BeritaPageState extends State<BeritaPage> {
-  
   int selectedCategory = 0;
   int selectedPage = 1;
 
@@ -36,7 +38,8 @@ class _BeritaPageState extends State<BeritaPage> {
   ];
 
   List<Map<String, dynamic>> news = [];
-
+  Set<String> savedNewsKeys = {};
+  bool isLoadingSavedNews = true;
   bool isLoadingNews = true;
   String newsError = '';
 
@@ -44,13 +47,87 @@ class _BeritaPageState extends State<BeritaPage> {
   void initState() {
     super.initState();
     _loadNews();
+    _loadSavedNews();
+  }
+
+  Future<void> _loadSavedNews() async {
+    final prefs = await SharedPreferences.getInstance();
+    final items = prefs.getStringList('saved_news_items') ?? [];
+
+    if (!mounted) return;
+
+    setState(() {
+      savedNewsKeys = items.map((raw) {
+        final item = jsonDecode(raw) as Map<String, dynamic>;
+        return _newsKey(item);
+      }).toSet();
+      isLoadingSavedNews = false;
+    });
+  }
+
+  String _newsKey(Map<String, dynamic> item) {
+    final url = (item['url'] ?? '').toString().trim();
+    if (url.isNotEmpty) return url;
+
+    return (item['title'] ?? '').toString().trim();
+  }
+
+  Future<void> _toggleSavedNews(Map<String, dynamic> item) async {
+    final prefs = await SharedPreferences.getInstance();
+    final items = prefs.getStringList('saved_news_items') ?? [];
+    final key = _newsKey(item);
+
+    items.removeWhere((raw) {
+      final saved = jsonDecode(raw) as Map<String, dynamic>;
+      return _newsKey(saved) == key;
+    });
+
+    final alreadySaved = savedNewsKeys.contains(key);
+
+    if (!alreadySaved) {
+      items.add(jsonEncode(item));
+    }
+
+    await prefs.setStringList('saved_news_items', items);
+
+    if (!mounted) return;
+
+    setState(() {
+      if (alreadySaved) {
+        savedNewsKeys.remove(key);
+      } else {
+        savedNewsKeys.add(key);
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          alreadySaved
+              ? 'Berita dihapus dari Simpan.'
+              : 'Berita berhasil disimpan.',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _shareNews(Map<String, dynamic> item) async {
+    final title = (item['title'] ?? 'Berita Emas').toString();
+    final url = (item['url'] ?? '').toString().trim();
+
+    final text = url.isNotEmpty ? '$title\n\nBaca selengkapnya: $url' : title;
+
+    await SharePlus.instance.share(ShareParams(text: text, subject: title));
   }
 
   String _formatDate(String raw) {
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) return raw;
 
+    // Waktu API berakhiran Z dikonversi ke waktu lokal perangkat.
     final date = parsed.toLocal();
+
     const months = [
       'Januari',
       'Februari',
@@ -66,7 +143,11 @@ class _BeritaPageState extends State<BeritaPage> {
       'Desember',
     ];
 
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
+    final day = date.day.toString().padLeft(2, '0');
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+
+    return '$day ${months[date.month - 1]} ${date.year} • $hour:$minute';
   }
 
   Future<void> _loadNews() async {
@@ -85,6 +166,7 @@ class _BeritaPageState extends State<BeritaPage> {
               'category': item['category'] ?? 'Emas',
               'source': item['source'] ?? 'Newsmaker.id',
               'date': _formatDate((item['published_at'] ?? '').toString()),
+              'publishedAt': (item['published_at'] ?? '').toString(),
               'title': item['title'] ?? '',
               'url': item['url'] ?? '',
               'description': item['content'] ?? '',
@@ -93,6 +175,21 @@ class _BeritaPageState extends State<BeritaPage> {
               'metric2Value': '-',
             };
           }).toList();
+
+          news.sort((a, b) {
+            final dateA = DateTime.tryParse(
+              (a['publishedAt'] ?? '').toString(),
+            );
+            final dateB = DateTime.tryParse(
+              (b['publishedAt'] ?? '').toString(),
+            );
+
+            if (dateA == null && dateB == null) return 0;
+            if (dateA == null) return 1;
+            if (dateB == null) return -1;
+
+            return dateB.compareTo(dateA);
+          });
 
           isLoadingNews = false;
           newsError = '';
@@ -111,236 +208,108 @@ class _BeritaPageState extends State<BeritaPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 90),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildMarketFlash(),
-                    _buildEditorialHeader(),
-                    _buildCategoryFilter(),
-                    _buildNewsFeed(),
-                    _buildWeeklyDigest(),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: _buildBottomNavigation(),
-    );
-  }
 
-  // ============================================================
-  // HEADER
-  // ============================================================
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color(0xFFF8FAFC),
 
-  Widget _buildHeader() {
-    return Container(
-      height: 80,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FF),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
+    // HEADER mengikuti gaya Dashboard
+    appBar: AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      titleSpacing: 16,
+      title: Row(
         children: [
-          // =========================
-          // BACK BUTTON
-          // =========================
-          IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 20,
-              color: Color(0xFF111827),
-            ),
-            tooltip: 'Kembali',
-          ),
-
-          // =========================
-          // LOGO
-          // =========================
           Container(
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: const Color(0xFF785600),
-              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xFFF3E8CC),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.show_chart, color: Colors.white, size: 23),
-          ),
-
-          const SizedBox(width: 8),
-
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      'EQUITY PULSE',
-                      style: TextStyle(
-                        color: Color(0xFF1F2937),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00855B).withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF006947),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            'Market Open',
-                            style: TextStyle(
-                              color: Color(0xFF006947),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 3),
-                const Text(
-                  'PT EQUITYWORLD FUTURES • FUTURES MARKET INTELLIGENCE',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Color(0xFF475569),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.notifications_none,
-              color: Color(0xFF4F4535),
-              size: 23,
-            ),
-          ),
-
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: const Color(0xFF785600).withValues(alpha: 0.20),
-                width: 2,
-              ),
-            ),
-            child: const CircleAvatar(
-              backgroundColor: Color(0xFFD3E4FE),
-              child: Icon(Icons.person, size: 18, color: Color(0xFF0B1C30)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // MARKET FLASH
-  // ============================================================
-
-  Widget _buildMarketFlash() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFE5CC),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 10,
-            height: 10,
-            decoration: const BoxDecoration(
-              color: Color(0xFF006947),
-              shape: BoxShape.circle,
+            child: const Icon(
+              Icons.trending_up,
+              color: Color(0xFF785600),
             ),
           ),
           const SizedBox(width: 10),
-          const Icon(Icons.bolt, color: Color(0xFF785600), size: 20),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Text.rich(
-              TextSpan(
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'EQUITY PULSE',
                 style: TextStyle(
-                  color: Color(0xFF0B1C30),
-                  fontSize: 13,
-                  height: 1.4,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
                 ),
-                children: [
-                  TextSpan(
-                    text: 'Kilas Pasar: ',
-                    style: TextStyle(
-                      color: Color(0xFFF58220),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  TextSpan(
-                    text:
-                        'XAU/USD berkonsolidasi kuat di area psikologis \$2,380/oz menjelang FOMC.',
-                  ),
-                ],
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
+              Text(
+                'MARKET INTELLIGENCE',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+            ],
           ),
         ],
       ),
+      actions: [
+        IconButton(
+  onPressed: () {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Fitur notifikasi belum dihubungkan.'),
+      ),
     );
-  }
+  },
+  icon: const Icon(
+    Icons.notifications_none,
+    color: Color(0xFF111827),
+  ),
+),
+        Padding(
+  padding: const EdgeInsets.only(right: 12),
+  child: CircleAvatar(
+    radius: 18,
+    backgroundColor: const Color(0xFFF3E8CC),
+    child: const Text(
+      'A',
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: Color(0xFF785600),
+      ),
+    ),
+  ),
+),
+      ],
+    ),
+
+    body: SafeArea(
+      top: false,
+      bottom: false,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildEditorialHeader(),
+            _buildCategoryFilter(),
+            _buildNewsFeed(),
+          ],
+        ),
+      ),
+    ),
+
+    bottomNavigationBar: _buildBottomNavigation(),
+  );
+}
+
 
   // ============================================================
   // EDITORIAL HEADER
@@ -355,7 +324,7 @@ class _BeritaPageState extends State<BeritaPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF3E8),
+              color: const Color(0xFFF3F4F6),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Row(
@@ -379,7 +348,7 @@ class _BeritaPageState extends State<BeritaPage> {
           const Text(
             'Berita Emas & Wawasan Komoditas',
             style: TextStyle(
-              color: Color(0xFF0B1C30),
+              color: Color(0xFF1F2937),
               fontSize: 24,
               height: 1.25,
               fontWeight: FontWeight.w700,
@@ -390,7 +359,7 @@ class _BeritaPageState extends State<BeritaPage> {
           const Text(
             'Informasi dan analisis fundamental pasar emas fisik dan berjangka terkurasi harian',
             style: TextStyle(
-              color: Color(0xFF4F4535),
+              color: Color(0xFF64748B),
               fontSize: 14,
               height: 1.45,
             ),
@@ -405,68 +374,83 @@ class _BeritaPageState extends State<BeritaPage> {
   // ============================================================
 
   Widget _buildCategoryFilter() {
-    return SizedBox(
-      height: 58,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        scrollDirection: Axis.horizontal,
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final selected = selectedCategory == index;
+    if (isLoadingNews || news.isEmpty || newsError.isNotEmpty) {
+      return const SizedBox.shrink();
+    }
 
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  selectedCategory = index;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? const Color(0xFF785600)
-                      : const Color(0xFFE5EEFF),
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: selected
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 5,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      categoryIcons[index],
-                      size: 16,
-                      color: selected ? Colors.white : const Color(0xFF4F4535),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      categories[index],
-                      style: TextStyle(
-                        color: selected
-                            ? Colors.white
-                            : const Color(0xFF4F4535),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+    final headlines = news
+        .where((item) => (item['title'] ?? '').toString().trim().isNotEmpty)
+        .toList();
+
+    if (headlines.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      height: 52,
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      color: const Color(0xFF1F2937),
+      child: Row(
+        children: [
+          Container(
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            color: const Color(0xFFF58220),
+            alignment: Alignment.center,
+            child: const Text(
+              'TOP NEWS',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
               ),
             ),
-          );
-        },
+          ),
+          Expanded(
+            child: SizedBox(
+              height: 52,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: headlines.length,
+                itemBuilder: (context, index) {
+                  final item = headlines[index];
+
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      InkWell(
+                        onTap: () => _openNewsDetail(item),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
+                          child: Text(
+                            item['title'].toString(),
+                            maxLines: 1,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Text(
+                        '|',
+                        style: TextStyle(
+                          color: Color(0xFFF58220),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -537,108 +521,9 @@ class _BeritaPageState extends State<BeritaPage> {
         children: [
           for (int i = 0; i < news.length; i++) ...[
             if (i > 0) const SizedBox(height: 16),
-            if (i == 0)
-              _buildFeaturedNews(news[i])
-            else
-              _buildCompactNews(news[i]),
+
+            _buildCompactNews(news[i]),
           ],
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // FEATURED NEWS
-  // ============================================================
-
-  Widget _buildFeaturedNews(Map<String, dynamic> item) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              SizedBox(
-                height: 210,
-                width: double.infinity,
-                child: Image.network(
-                  item['image'] ?? '',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return _imagePlaceholder();
-                  },
-                ),
-              ),
-              Positioned(
-                left: 14,
-                bottom: 14,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF785600),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    item['category'].toString().toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSourceDate(item['source'], item['date'], Icons.business),
-                const SizedBox(height: 9),
-                Text(
-                  item['title'],
-                  style: const TextStyle(
-                    color: Color(0xFF0B1C30),
-                    fontSize: 16,
-                    height: 1.35,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  item['description'],
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF4F4535),
-                    fontSize: 13,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 13),
-                const SizedBox(height: 14),
-                _buildNewsActions(item),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -688,15 +573,14 @@ class _BeritaPageState extends State<BeritaPage> {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: derivative
-                        ? const Color(0xFF565E74)
-                        : const Color(0xFF006947),
+                    color: const Color(0xFFFFE5CC),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     item['category'].toString().toUpperCase(),
+
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFFD96812),
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                     ),
@@ -736,11 +620,9 @@ class _BeritaPageState extends State<BeritaPage> {
                     height: 1.5,
                   ),
                 ),
+
                 const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: _buildReadButton(item),
-                ),
+                _buildNewsActions(item),
               ],
             ),
           ),
@@ -755,7 +637,7 @@ class _BeritaPageState extends State<BeritaPage> {
   Widget _buildSourceDate(String source, String date, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: const Color(0xFF785600)),
+        Icon(icon, size: 16, color: const Color(0xFFF58220)),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
@@ -763,7 +645,7 @@ class _BeritaPageState extends State<BeritaPage> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: Color(0xFF4F4535),
+              color: Color(0xFF64748B),
               fontSize: 10,
               fontWeight: FontWeight.w600,
             ),
@@ -776,13 +658,26 @@ class _BeritaPageState extends State<BeritaPage> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: Color(0xFF565E74),
+              color: Color(0xFF64748B),
               fontSize: 9,
               fontWeight: FontWeight.w500,
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSaveButton(Map<String, dynamic> item) {
+    final isSaved = savedNewsKeys.contains(_newsKey(item));
+
+    return IconButton(
+      tooltip: isSaved ? 'Hapus dari Simpan' : 'Simpan berita',
+      onPressed: () => _toggleSavedNews(item),
+      icon: Icon(
+        isSaved ? Icons.bookmark : Icons.bookmark_border,
+        color: const Color(0xFFF58220),
+      ),
     );
   }
 
@@ -793,14 +688,19 @@ class _BeritaPageState extends State<BeritaPage> {
   Widget _buildNewsActions(Map<String, dynamic> item) {
     return Row(
       children: [
-        _roundActionButton(Icons.bookmark_border),
+        _buildSaveButton(item),
         const SizedBox(width: 7),
-        _roundActionButton(Icons.share_outlined),
+        IconButton(
+          tooltip: 'Bagikan berita',
+          onPressed: () => _shareNews(item),
+          icon: const Icon(Icons.share_outlined),
+          color: const Color(0xFFF58220),
+        ),
         const Spacer(),
         ElevatedButton(
           onPressed: () => _openNewsDetail(item),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF785600),
+            backgroundColor: const Color(0xFFF58220),
             foregroundColor: Colors.white,
             elevation: 0,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -831,213 +731,155 @@ class _BeritaPageState extends State<BeritaPage> {
     );
   }
 
-  Widget _buildReadButton(Map<String, dynamic> item) {
-    return ElevatedButton(
-      onPressed: () => _openNewsDetail(item),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFE5EEFF),
-        foregroundColor: const Color(0xFF0B1C30),
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Baca Selengkapnya',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-          ),
-          SizedBox(width: 5),
-          Icon(Icons.arrow_forward, size: 15),
-        ],
-      ),
-    );
-  }
-
-  Widget _roundActionButton(IconData icon) {
-    return InkWell(
-      onTap: () {},
-      borderRadius: BorderRadius.circular(50),
-      child: Container(
-        width: 34,
-        height: 34,
-        decoration: const BoxDecoration(
-          color: Color(0xFFE5EEFF),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, size: 18, color: const Color(0xFF4F4535)),
-      ),
-    );
-  }
-
   // ============================================================
   // WEEKLY DIGEST
   // ============================================================
 
-  Widget _buildWeeklyDigest() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFDCE9FF), Color(0xFFE5EEFF), Color(0xFFEFF4FF)],
-        ),
-        borderRadius: BorderRadius.all(Radius.circular(12)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFF785600),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.mark_email_read_outlined,
-              color: Colors.white,
-              size: 25,
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Buletin Pasar Mingguan',
-                  style: TextStyle(
-                    color: Color(0xFF0B1C30),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  'Dapatkan rekap Pivot Point & sentimen harga emas setiap Senin pagi.',
-                  style: TextStyle(
-                    color: Color(0xFF4F4535),
-                    fontSize: 11,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  
+Widget _buildBottomNavigation() {
+  final items = [
+    (icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Dashboard'),
+    (
+      icon: Icons.newspaper_outlined,
+      activeIcon: Icons.newspaper,
+      label: 'Berita',
+    ),
+    (icon: Icons.show_chart, activeIcon: Icons.show_chart, label: 'Harga'),
+    (
+      icon: Icons.table_chart_outlined,
+      activeIcon: Icons.table_chart,
+      label: 'Pivot',
+    ),
+    (
+      icon: Icons.calculate_outlined,
+      activeIcon: Icons.calculate,
+      label: 'Kalkulator',
+    ),
+    (
+      icon: Icons.history_outlined,
+      activeIcon: Icons.history,
+      label: 'Histori',
+    ),
+    (
+      icon: Icons.apartment_outlined,
+      activeIcon: Icons.apartment,
+      label: 'Profil PT',
+    ),
+  ];
 
-  Widget _buildBottomNavigation() {
-    return Container(
-      height: 68,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FF),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, -2),
-          ),
-        ],
+  return Container(
+    height: 72,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border(
+        top: BorderSide(color: Colors.grey.shade200),
       ),
-      child: SafeArea(
-        top: false,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.04),
+          blurRadius: 10,
+          offset: const Offset(0, -3),
+        ),
+      ],
+    ),
+    child: SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _bottomItem(Icons.home_outlined, 'Dashboard', false),
-            _bottomItem(Icons.newspaper, 'Berita', true),
-            _bottomItem(Icons.show_chart, 'Harga', false),
-            _bottomItem(Icons.table_chart_outlined, 'Pivot', false),
-            _bottomItem(Icons.calculate_outlined, 'Kalkulator', false),
-            _bottomItem(Icons.history, 'Histori', false),
-            _bottomItem(Icons.apartment_outlined, 'Profil PT', false),
-          ],
-        ),
-      ),
-    );
-  }
+          children: List.generate(items.length, (index) {
+            final active = index == 1;
 
-  Widget _bottomItem(IconData icon, String label, bool active) {
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          switch (label) {
-            case 'Dashboard':
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const DashboardPage()),
-              );
-              break;
-
-            case 'Berita':
-              break;
-
-            case 'Harga':
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const HargaEmasPage()),
-              );
-              break;
-
-            case 'Pivot':
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const PivotPointPage()),
-              );
-              break;
-
-            case 'Kalkulator':
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const KalkulatorPage()),
-              );
-              break;
-
-            case 'Histori':
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const HistoriPage()),
-              );
-              break;
-
-            case 'Profil PT':
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const InformasiPtPage(),
+            return SizedBox(
+              width: 82,
+              child: InkWell(
+                onTap: () {
+                  switch (index) {
+                    case 0:
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DashboardPage(),
+                        ),
+                      );
+                      break;
+                    case 1:
+                      break;
+                    case 2:
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HargaEmasPage(),
+                        ),
+                      );
+                      break;
+                    case 3:
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PivotPointPage(),
+                        ),
+                      );
+                      break;
+                    case 4:
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const KalkulatorPage(),
+                        ),
+                      );
+                      break;
+                    case 5:
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HistoriPage(),
+                        ),
+                      );
+                      break;
+                    case 6:
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const InformasiPtPage(),
+                        ),
+                      );
+                      break;
+                  }
+                },
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      active ? items[index].activeIcon : items[index].icon,
+                      size: 21,
+                      color: active
+                          ? const Color(0xFF785600)
+                          : const Color(0xFF9CA3AF),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      items[index].label,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: active
+                            ? FontWeight.w800
+                            : FontWeight.w600,
+                        color: active
+                            ? const Color(0xFF785600)
+                            : const Color(0xFF9CA3AF),
+                      ),
+                    ),
+                  ],
                 ),
-              );
-              break;
-          }
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: active ? const Color(0xFF785600) : const Color(0xFF565E74),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: TextStyle(
-                color: active
-                    ? const Color(0xFF785600)
-                    : const Color(0xFF565E74),
-                fontSize: 9,
-                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
               ),
-            ),
-          ],
+            );
+          }),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // ============================================================
   // IMAGE PLACEHOLDER

@@ -1,0 +1,261 @@
+import 'package:flutter/material.dart';
+
+import '../services/live_quote_service.dart';
+
+class LiveQuotesTable extends StatefulWidget {
+  const LiveQuotesTable({super.key});
+
+  @override
+  State<LiveQuotesTable> createState() => _LiveQuotesTableState();
+}
+
+class _LiveQuotesTableState extends State<LiveQuotesTable> {
+  late final LiveQuoteService _service;
+
+  static const Color _orange = Color(0xFFF58220);
+  static const Color _green = Color(0xFF00866A);
+  static const Color _red = Color(0xFFD64545);
+  static const Color _secondary = Color(0xFF64748B);
+
+  @override
+  void initState() {
+    super.initState();
+    _service = LiveQuoteService();
+    _service.addListener(_onUpdate);
+    _service.start();
+  }
+
+  void _onUpdate() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _service.removeListener(_onUpdate);
+    _service.dispose();
+    super.dispose();
+  }
+
+  String _formatPrice(double? value) {
+    if (value == null) return '—';
+    return value.toStringAsFixed(value == value.roundToDouble() ? 0 : 2);
+  }
+
+  String _formatTime(DateTime? time) {
+    if (time == null) return 'Belum tersedia';
+
+    final local = time.toLocal();
+    final d = local.day.toString().padLeft(2, '0');
+    final m = local.month.toString().padLeft(2, '0');
+    final y = local.year.toString();
+    final h = local.hour.toString().padLeft(2, '0');
+    final min = local.minute.toString().padLeft(2, '0');
+    final s = local.second.toString().padLeft(2, '0');
+
+    return '$d/$m/$y $h:$min:$s';
+  }
+
+  Widget _statusIndicator() {
+    final connected = _service.isConnected;
+    final color = connected ? _green : _red;
+    final text = _service.isConnecting
+        ? 'Menghubungkan...'
+        : connected
+        ? 'WebSocket terhubung'
+        : 'Koneksi terputus';
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.circle, size: 8, color: color),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _freshnessText(LiveQuote? quote) {
+    if (quote?.sourceTime == null) {
+      return const Text(
+        'Menunggu data harga dari sumber',
+        style: TextStyle(fontSize: 10, color: _secondary),
+      );
+    }
+
+    final fresh =
+        quote!.sourceTime != null &&
+        DateTime.now().difference(quote.sourceTime!) >= Duration.zero &&
+        DateTime.now().difference(quote.sourceTime!) <=
+            const Duration(minutes: 5);
+
+    return Text(
+      fresh
+          ? 'Waktu sumber: ${_formatTime(quote.sourceTime)}'
+          : 'Data lama · ${_formatTime(quote.sourceTime)}',
+      style: TextStyle(
+        fontSize: 10,
+        color: fresh ? _green : _red,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final gold = _service.quotes['XUL10'];
+    final hkk = _service.quotes['HKK50_BBJ'];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFFE5CC)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Live Quotes',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Sambungkan ulang',
+                visualDensity: VisualDensity.compact,
+                onPressed: _service.reconnect,
+                icon: const Icon(Icons.refresh, size: 20, color: _orange),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Market quotes for XUL and HKK',
+            style: TextStyle(fontSize: 11, color: _secondary),
+          ),
+          const SizedBox(height: 8),
+          _statusIndicator(),
+          if (_service.errorMessage != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              _service.errorMessage!,
+              style: const TextStyle(fontSize: 10, color: _red),
+            ),
+          ],
+          const SizedBox(height: 14),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(const Color(0xFFFFF3E8)),
+              headingTextStyle: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1F2937),
+              ),
+              dataTextStyle: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1F2937),
+              ),
+              columnSpacing: 20,
+              horizontalMargin: 10,
+              columns: const [
+                DataColumn(label: Text('Symbol')),
+                DataColumn(label: Text('Last')),
+                DataColumn(label: Text('Bid')),
+                DataColumn(label: Text('Ask')),
+                DataColumn(label: Text('Open')),
+                DataColumn(label: Text('High')),
+                DataColumn(label: Text('Low')),
+                DataColumn(label: Text('Change (%)')),
+              ],
+              rows: [
+                _row('XUL', 'Loco London Gold', gold),
+                _row('HKK', 'Hang Seng Index Futures', hkk),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          _freshnessText(gold),
+          const SizedBox(height: 4),
+          _freshnessText(hkk),
+          const SizedBox(height: 8),
+          const Text(
+            'Harga hanya dianggap baru jika waktu dari sumber berusia '
+            'maksimal 5 menit. Data di luar batas ini ditandai sebagai data lama.',
+            style: TextStyle(fontSize: 10, color: _secondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  double? _percentChange(LiveQuote? quote) {
+    final price = quote?.price;
+    final open = quote?.open;
+
+    if (price == null || open == null || open == 0) return null;
+    return ((price - open) / open) * 100;
+  }
+
+  String _formatPercent(LiveQuote? quote) {
+    final percent = _percentChange(quote);
+    if (percent == null) return '—';
+
+    final sign = percent > 0 ? '+' : '';
+    return '$sign${percent.toStringAsFixed(2)}%';
+  }
+
+  DataRow _row(String code, String name, LiveQuote? quote) {
+    final change = _percentChange(quote);
+
+    return DataRow(
+      cells: [
+        DataCell(Tooltip(message: name, child: Text(code))),
+        DataCell(Text(_formatPrice(quote?.price))),
+        DataCell(Text(_formatPrice(quote?.bid))),
+        DataCell(Text(_formatPrice(quote?.ask))),
+        DataCell(Text(_formatPrice(quote?.open))),
+        DataCell(Text(_formatPrice(quote?.high))),
+        DataCell(Text(_formatPrice(quote?.low))),
+        DataCell(
+          Text(
+            _formatPercent(quote),
+            style: TextStyle(
+              color: change == null
+                  ? _secondary
+                  : change >= 0
+                  ? _green
+                  : _red,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
