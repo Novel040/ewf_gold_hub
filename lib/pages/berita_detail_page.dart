@@ -1,36 +1,27 @@
-
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:html/parser.dart' as html_parser;
 
 class BeritaDetailPage extends StatelessWidget {
   final Map<String, dynamic> article;
 
-  const BeritaDetailPage({
-    super.key,
-    required this.article,
-  });
+  const BeritaDetailPage({super.key, required this.article});
 
   // Tema warna EWF
-  static const Color background = Color(0xFFF8FAFC);
+  static const Color background = Color(0xFFFFFBF7);
   static const Color white = Color(0xFFFFFFFF);
   static const Color primary = Color(0xFFF58220);
   static const Color primaryDark = Color(0xFFD96812);
   static const Color primaryLight = Color(0xFFFFE5CC);
-  static const Color textPrimary = Color(0xFF1F2937);
-  static const Color textSecondary = Color(0xFF475569);
-  static const Color muted = Color(0xFF64748B);
+  static const Color textPrimary = Color(0xFF252525);
+  static const Color textSecondary = Color(0xFF555555);
+  static const Color muted = Color(0xFF777777);
   static const Color dividerColor = Color(0xFFE2E8F0);
 
   String _cleanContent(String raw) {
     final formatted = raw
-        .replaceAll(
-          RegExp(r'</p\s*>', caseSensitive: false),
-          '\n\n',
-        )
-        .replaceAll(
-          RegExp(r'<br\s*/?>', caseSensitive: false),
-          '\n',
-        );
+        .replaceAll(RegExp(r'</p\s*>', caseSensitive: false), '\n\n')
+        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
 
     final document = html_parser.parse(formatted);
 
@@ -44,9 +35,7 @@ class BeritaDetailPage extends StatelessWidget {
     final source = article['source']?.toString() ?? 'Equity Pulse';
     final date = article['date']?.toString() ?? '';
     final image = article['image']?.toString() ?? '';
-    final content = _cleanContent(
-      article['description']?.toString() ?? '',
-    );
+    final content = _cleanContent(article['description']?.toString() ?? '');
 
     return Scaffold(
       backgroundColor: background,
@@ -55,9 +44,9 @@ class BeritaDetailPage extends StatelessWidget {
         foregroundColor: textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: const Text(
+        title: Text(
           'Detail Berita',
-          style: TextStyle(
+          style: GoogleFonts.roboto(
             fontSize: 18,
             fontWeight: FontWeight.w700,
             color: textPrimary,
@@ -89,17 +78,14 @@ class BeritaDetailPage extends StatelessWidget {
 
             // Label kategori
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 6,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: primaryLight,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 category.toUpperCase(),
-                style: const TextStyle(
+                style: GoogleFonts.roboto(
                   color: primaryDark,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -113,7 +99,7 @@ class BeritaDetailPage extends StatelessWidget {
             // Judul berita
             Text(
               title,
-              style: const TextStyle(
+              style: GoogleFonts.roboto(
                 color: textPrimary,
                 fontSize: 24,
                 height: 1.35,
@@ -126,16 +112,12 @@ class BeritaDetailPage extends StatelessWidget {
             // Sumber dan tanggal
             Row(
               children: [
-                const Icon(
-                  Icons.newspaper_outlined,
-                  size: 17,
-                  color: primary,
-                ),
+                const Icon(Icons.newspaper_outlined, size: 17, color: primary),
                 const SizedBox(width: 7),
                 Expanded(
                   child: Text(
                     source,
-                    style: const TextStyle(
+                    style: GoogleFonts.roboto(
                       color: textSecondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -152,10 +134,7 @@ class BeritaDetailPage extends StatelessWidget {
                   child: Text(
                     date,
                     textAlign: TextAlign.end,
-                    style: const TextStyle(
-                      color: muted,
-                      fontSize: 11,
-                    ),
+                    style: GoogleFonts.roboto(color: muted, fontSize: 11),
                   ),
                 ),
               ],
@@ -168,9 +147,9 @@ class BeritaDetailPage extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Isi berita
-            const Text(
+            Text(
               'Isi Berita',
-              style: TextStyle(
+              style: GoogleFonts.roboto(
                 color: textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -180,10 +159,8 @@ class BeritaDetailPage extends StatelessWidget {
             const SizedBox(height: 12),
 
             SelectableText(
-              content.isNotEmpty
-                  ? content
-                  : 'Isi berita belum tersedia.',
-              style: const TextStyle(
+              content.isNotEmpty ? content : 'Isi berita belum tersedia.',
+              style: GoogleFonts.roboto(
                 color: textPrimary,
                 fontSize: 15,
                 height: 1.8,
@@ -221,11 +198,7 @@ class BeritaDetailPage extends StatelessWidget {
       height: 220,
       color: primaryLight,
       alignment: Alignment.center,
-      child: const Icon(
-        Icons.newspaper_outlined,
-        size: 56,
-        color: primary,
-      ),
+      child: const Icon(Icons.newspaper_outlined, size: 56, color: primary),
     );
   }
 }

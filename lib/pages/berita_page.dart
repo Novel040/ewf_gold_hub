@@ -3,6 +3,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'berita_detail_page.dart';
 import 'package:http/http.dart' as http;
 import 'dashboard_page.dart';
@@ -116,16 +117,19 @@ class _BeritaPageState extends State<BeritaPage> {
     final title = (item['title'] ?? 'Berita Emas').toString();
     final url = (item['url'] ?? '').toString().trim();
 
-    final text = url.isNotEmpty ? '$title\n\nBaca selengkapnya: $url' : title;
+    final text = url.isNotEmpty
+        ? '$title\n\nBaca selengkapnya: $url'
+        : title;
 
-    await SharePlus.instance.share(ShareParams(text: text, subject: title));
+    await SharePlus.instance.share(
+      ShareParams(text: text, subject: title),
+    );
   }
 
   String _formatDate(String raw) {
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) return raw;
 
-    // Waktu API berakhiran Z dikonversi ke waktu lokal perangkat.
     final date = parsed.toLocal();
 
     const months = [
@@ -156,6 +160,8 @@ class _BeritaPageState extends State<BeritaPage> {
         Uri.parse('http://10.0.2.2:8000/api/news'),
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
 
@@ -165,7 +171,9 @@ class _BeritaPageState extends State<BeritaPage> {
               'image': item['image'] ?? '',
               'category': item['category'] ?? 'Emas',
               'source': item['source'] ?? 'Newsmaker.id',
-              'date': _formatDate((item['published_at'] ?? '').toString()),
+              'date': _formatDate(
+                (item['published_at'] ?? '').toString(),
+              ),
               'publishedAt': (item['published_at'] ?? '').toString(),
               'title': item['title'] ?? '',
               'url': item['url'] ?? '',
@@ -197,10 +205,13 @@ class _BeritaPageState extends State<BeritaPage> {
       } else {
         setState(() {
           isLoadingNews = false;
-          newsError = 'Gagal mengambil berita (${response.statusCode})';
+          newsError =
+              'Gagal mengambil berita (${response.statusCode})';
         });
       }
     } catch (e) {
+      if (!mounted) return;
+
       setState(() {
         isLoadingNews = false;
         newsError = 'Error: $e';
@@ -208,108 +219,117 @@ class _BeritaPageState extends State<BeritaPage> {
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTextStyle.merge(
+      style: GoogleFonts.roboto(),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: const Color(0xFFF8FAFC),
-
-    // HEADER mengikuti gaya Dashboard
-    appBar: AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      surfaceTintColor: Colors.transparent,
-      titleSpacing: 16,
-      title: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3E8CC),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.trending_up,
-              color: Color(0xFF785600),
-            ),
-          ),
-          const SizedBox(width: 10),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          titleSpacing: 16,
+          title: Row(
             children: [
-              Text(
-                'EQUITY PULSE',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF111827),
-                ),
-              ),
-              Text(
-                'MARKET INTELLIGENCE',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF6B7280),
-                ),
+              Container(
+  width: 42,
+  height: 42,
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(8),
+  ),
+  clipBehavior: Clip.antiAlias,
+  child: Image.asset(
+    'assets/images/logo_perusahaan.png',
+    fit: BoxFit.contain,
+    errorBuilder: (context, error, stackTrace) {
+      return const Icon(
+        Icons.trending_up,
+        color: Color(0xFFD96812),
+      );
+    },
+  ),
+),
+              const SizedBox(width: 10),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'EQUITY PULSE',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1F2937),
+                    ),
+                  ),
+                  Text(
+                    'MARKET INTELLIGENCE',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
-      actions: [
-        IconButton(
-  onPressed: () {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fitur notifikasi belum dihubungkan.'),
-      ),
-    );
-  },
-  icon: const Icon(
-    Icons.notifications_none,
-    color: Color(0xFF111827),
-  ),
-),
-        Padding(
-  padding: const EdgeInsets.only(right: 12),
-  child: CircleAvatar(
-    radius: 18,
-    backgroundColor: const Color(0xFFF3E8CC),
-    child: const Text(
-      'A',
-      style: TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: Color(0xFF785600),
-      ),
-    ),
-  ),
-),
-      ],
-    ),
-
-    body: SafeArea(
-      top: false,
-      bottom: false,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildEditorialHeader(),
-            _buildCategoryFilter(),
-            _buildNewsFeed(),
+          actions: [
+            IconButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Fitur notifikasi belum dihubungkan.',
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(
+                Icons.notifications_none,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: const Color(0xFFFFF3E8),
+                child: const Text(
+                  'A',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFD96812),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
+
+        body: SafeArea(
+          top: false,
+          bottom: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildEditorialHeader(),
+                _buildCategoryFilter(),
+                _buildNewsFeed(),
+              ],
+            ),
+          ),
+        ),
+
+        bottomNavigationBar: _buildBottomNavigation(),
       ),
-    ),
-
-    bottomNavigationBar: _buildBottomNavigation(),
-  );
-}
-
+    );
+  }
 
   // ============================================================
   // EDITORIAL HEADER
@@ -322,20 +342,27 @@ Widget build(BuildContext context) {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 4,
+            ),
             decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6),
+              color: const Color(0xFFFFF3E8),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.feed_outlined, size: 16, color: Color(0xFFF58220)),
+                Icon(
+                  Icons.feed_outlined,
+                  size: 16,
+                  color: Color(0xFFF58220),
+                ),
                 SizedBox(width: 5),
                 Text(
                   'COMMODITY INTELLIGENCE',
                   style: TextStyle(
-                    color: Color(0xFF4F4535),
+                    color: Color(0xFF475569),
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.7,
@@ -357,7 +384,8 @@ Widget build(BuildContext context) {
           ),
           const SizedBox(height: 7),
           const Text(
-            'Informasi dan analisis fundamental pasar emas fisik dan berjangka terkurasi harian',
+            'Informasi dan analisis fundamental pasar emas fisik '
+            'dan berjangka terkurasi harian',
             style: TextStyle(
               color: Color(0xFF64748B),
               fontSize: 14,
@@ -370,7 +398,7 @@ Widget build(BuildContext context) {
   }
 
   // ============================================================
-  // CATEGORY FILTER
+  // CATEGORY FILTER / TOP NEWS
   // ============================================================
 
   Widget _buildCategoryFilter() {
@@ -379,7 +407,9 @@ Widget build(BuildContext context) {
     }
 
     final headlines = news
-        .where((item) => (item['title'] ?? '').toString().trim().isNotEmpty)
+        .where(
+          (item) => (item['title'] ?? '').toString().trim().isNotEmpty,
+        )
         .toList();
 
     if (headlines.isEmpty) {
@@ -429,6 +459,7 @@ Widget build(BuildContext context) {
                           child: Text(
                             item['title'].toString(),
                             maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 13,
@@ -460,38 +491,49 @@ Widget build(BuildContext context) {
   // ============================================================
 
   Widget _buildNewsFeed() {
-    // =========================
-    // LOADING
-    // =========================
     if (isLoadingNews) {
       return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 40),
-        child: Center(child: CircularProgressIndicator()),
+        padding: EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 40,
+        ),
+        child: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFFF58220),
+          ),
+        ),
       );
     }
 
-    // =========================
-    // ERROR
-    // =========================
     if (newsError.isNotEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 30),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 30,
+        ),
         child: Column(
           children: [
             const Icon(
               Icons.cloud_off_rounded,
               size: 40,
-              color: Color(0xFF785600),
+              color: Color(0xFFD96812),
             ),
             const SizedBox(height: 12),
             Text(
               newsError,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF4F4535), fontSize: 13),
+              style: const TextStyle(
+                color: Color(0xFF475569),
+                fontSize: 13,
+              ),
             ),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: _loadNews,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF58220),
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Coba Lagi'),
             ),
           ],
@@ -499,29 +541,30 @@ Widget build(BuildContext context) {
       );
     }
 
-    // =========================
-    // DATA KOSONG
-    // =========================
     if (news.isEmpty) {
       return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 40),
+        padding: EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 40,
+        ),
         child: Center(
           child: Text(
             'Belum ada berita.',
-            style: TextStyle(color: Color(0xFF4F4535), fontSize: 13),
+            style: TextStyle(
+              color: Color(0xFF475569),
+              fontSize: 13,
+            ),
           ),
         ),
       );
     }
 
-    // Tampilkan seluruh berita yang diterima dari API.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
           for (int i = 0; i < news.length; i++) ...[
             if (i > 0) const SizedBox(height: 16),
-
             _buildCompactNews(news[i]),
           ],
         ],
@@ -530,7 +573,7 @@ Widget build(BuildContext context) {
   }
 
   // ============================================================
-  // COMPACT NEWS
+  // NEWS CARD
   // ============================================================
 
   Widget _buildCompactNews(Map<String, dynamic> item) {
@@ -550,6 +593,7 @@ Widget build(BuildContext context) {
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Stack(
             children: [
@@ -557,7 +601,7 @@ Widget build(BuildContext context) {
                 height: 180,
                 width: double.infinity,
                 child: Image.network(
-                  item['image'] ?? '',
+                  (item['image'] ?? '').toString(),
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return _imagePlaceholder();
@@ -578,7 +622,6 @@ Widget build(BuildContext context) {
                   ),
                   child: Text(
                     item['category'].toString().toUpperCase(),
-
                     style: const TextStyle(
                       color: Color(0xFFD96812),
                       fontSize: 10,
@@ -595,15 +638,15 @@ Widget build(BuildContext context) {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildSourceDate(
-                  item['source'],
-                  item['date'],
+                  (item['source'] ?? '').toString(),
+                  (item['date'] ?? '').toString(),
                   derivative ? Icons.newspaper : Icons.storefront,
                 ),
                 const SizedBox(height: 9),
                 Text(
-                  item['title'],
+                  (item['title'] ?? '').toString(),
                   style: const TextStyle(
-                    color: Color(0xFF0B1C30),
+                    color: Color(0xFF1F2937),
                     fontSize: 16,
                     height: 1.35,
                     fontWeight: FontWeight.w700,
@@ -611,16 +654,15 @@ Widget build(BuildContext context) {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  item['description'],
+                  (item['description'] ?? '').toString(),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Color(0xFF4F4535),
+                    color: Color(0xFF475569),
                     fontSize: 13,
                     height: 1.5,
                   ),
                 ),
-
                 const SizedBox(height: 12),
                 _buildNewsActions(item),
               ],
@@ -630,14 +672,23 @@ Widget build(BuildContext context) {
       ),
     );
   }
+
   // ============================================================
   // SOURCE + DATE
   // ============================================================
 
-  Widget _buildSourceDate(String source, String date, IconData icon) {
+  Widget _buildSourceDate(
+    String source,
+    String date,
+    IconData icon,
+  ) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: const Color(0xFFF58220)),
+        Icon(
+          icon,
+          size: 16,
+          color: const Color(0xFFF58220),
+        ),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
@@ -668,6 +719,10 @@ Widget build(BuildContext context) {
     );
   }
 
+  // ============================================================
+  // SAVE NEWS
+  // ============================================================
+
   Widget _buildSaveButton(Map<String, dynamic> item) {
     final isSaved = savedNewsKeys.contains(_newsKey(item));
 
@@ -697,27 +752,38 @@ Widget build(BuildContext context) {
           color: const Color(0xFFF58220),
         ),
         const Spacer(),
-        ElevatedButton(
-          onPressed: () => _openNewsDetail(item),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF58220),
-            foregroundColor: Colors.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Baca Selengkapnya',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+        Flexible(
+          child: ElevatedButton(
+            onPressed: () => _openNewsDetail(item),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF58220),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 10,
               ),
-              SizedBox(width: 5),
-              Icon(Icons.arrow_forward, size: 16),
-            ],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    'Baca Selengkapnya',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 5),
+                Icon(Icons.arrow_forward, size: 16),
+              ],
+            ),
           ),
         ),
       ],
@@ -727,159 +793,170 @@ Widget build(BuildContext context) {
   void _openNewsDetail(Map<String, dynamic> item) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => BeritaDetailPage(article: item)),
+      MaterialPageRoute(
+        builder: (_) => BeritaDetailPage(article: item),
+      ),
     );
   }
 
   // ============================================================
-  // WEEKLY DIGEST
+  // BOTTOM NAVIGATION
   // ============================================================
 
-  
-Widget _buildBottomNavigation() {
-  final items = [
-    (icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Dashboard'),
-    (
-      icon: Icons.newspaper_outlined,
-      activeIcon: Icons.newspaper,
-      label: 'Berita',
-    ),
-    (icon: Icons.show_chart, activeIcon: Icons.show_chart, label: 'Harga'),
-    (
-      icon: Icons.table_chart_outlined,
-      activeIcon: Icons.table_chart,
-      label: 'Pivot',
-    ),
-    (
-      icon: Icons.calculate_outlined,
-      activeIcon: Icons.calculate,
-      label: 'Kalkulator',
-    ),
-    (
-      icon: Icons.history_outlined,
-      activeIcon: Icons.history,
-      label: 'Histori',
-    ),
-    (
-      icon: Icons.apartment_outlined,
-      activeIcon: Icons.apartment,
-      label: 'Profil PT',
-    ),
-  ];
-
-  return Container(
-    height: 72,
-    decoration: BoxDecoration(
-      color: Colors.white,
-      border: Border(
-        top: BorderSide(color: Colors.grey.shade200),
+  Widget _buildBottomNavigation() {
+    final items = [
+      (
+        icon: Icons.home_outlined,
+        activeIcon: Icons.home,
+        label: 'Dashboard',
       ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.04),
-          blurRadius: 10,
-          offset: const Offset(0, -3),
-        ),
-      ],
-    ),
-    child: SafeArea(
-      top: false,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: List.generate(items.length, (index) {
-            final active = index == 1;
+      (
+        icon: Icons.newspaper_outlined,
+        activeIcon: Icons.newspaper,
+        label: 'Berita',
+      ),
+      (
+        icon: Icons.show_chart,
+        activeIcon: Icons.show_chart,
+        label: 'Harga',
+      ),
+      (
+        icon: Icons.table_chart_outlined,
+        activeIcon: Icons.table_chart,
+        label: 'Pivot',
+      ),
+      (
+        icon: Icons.calculate_outlined,
+        activeIcon: Icons.calculate,
+        label: 'Kalkulator',
+      ),
+      (
+        icon: Icons.history_outlined,
+        activeIcon: Icons.history,
+        label: 'Histori',
+      ),
+      (
+        icon: Icons.apartment_outlined,
+        activeIcon: Icons.apartment,
+        label: 'Profil PT',
+      ),
+    ];
 
-            return SizedBox(
-              width: 82,
-              child: InkWell(
-                onTap: () {
-                  switch (index) {
-                    case 0:
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const DashboardPage(),
-                        ),
-                      );
-                      break;
-                    case 1:
-                      break;
-                    case 2:
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HargaEmasPage(),
-                        ),
-                      );
-                      break;
-                    case 3:
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PivotPointPage(),
-                        ),
-                      );
-                      break;
-                    case 4:
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const KalkulatorPage(),
-                        ),
-                      );
-                      break;
-                    case 5:
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HistoriPage(),
-                        ),
-                      );
-                      break;
-                    case 6:
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const InformasiPtPage(),
-                        ),
-                      );
-                      break;
-                  }
-                },
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      active ? items[index].activeIcon : items[index].icon,
-                      size: 21,
-                      color: active
-                          ? const Color(0xFF785600)
-                          : const Color(0xFF9CA3AF),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      items[index].label,
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: active
-                            ? FontWeight.w800
-                            : FontWeight.w600,
+    return Container(
+      height: 72,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: Colors.grey.shade200),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: List.generate(items.length, (index) {
+              final active = index == 1;
+
+              return SizedBox(
+                width: 82,
+                child: InkWell(
+                  onTap: () {
+                    switch (index) {
+                      case 0:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const DashboardPage(),
+                          ),
+                        );
+                        break;
+                      case 1:
+                        break;
+                      case 2:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HargaEmasPage(),
+                          ),
+                        );
+                        break;
+                      case 3:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const PivotPointPage(),
+                          ),
+                        );
+                        break;
+                      case 4:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const KalkulatorPage(),
+                          ),
+                        );
+                        break;
+                      case 5:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HistoriPage(),
+                          ),
+                        );
+                        break;
+                      case 6:
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const InformasiPtPage(),
+                          ),
+                        );
+                        break;
+                    }
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        active
+                            ? items[index].activeIcon
+                            : items[index].icon,
+                        size: 21,
                         color: active
-                            ? const Color(0xFF785600)
+                            ? const Color(0xFFD96812)
                             : const Color(0xFF9CA3AF),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        items[index].label,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: active
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                          color: active
+                              ? const Color(0xFFD96812)
+                              : const Color(0xFF9CA3AF),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // ============================================================
   // IMAGE PLACEHOLDER
@@ -887,12 +964,14 @@ Widget _buildBottomNavigation() {
 
   Widget _imagePlaceholder() {
     return Container(
-      color: const Color(0xFFDCE9FF),
+      color: const Color(0xFFFFF3E8),
       child: const Center(
-        child: Icon(Icons.image_outlined, size: 50, color: Color(0xFF785600)),
+        child: Icon(
+          Icons.image_outlined,
+          size: 50,
+          color: Color(0xFFD96812),
+        ),
       ),
     );
   }
-
-  // ============================================================
 }

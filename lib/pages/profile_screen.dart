@@ -1,184 +1,472 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  static const Color orange = Color(0xFFF58220);
+  static const Color orangeDark = Color(0xFFD96812);
+  static const Color pageBackground = Color(0xFFFFFFFF);
+  static const Color cardBackground = Color(0xFFF5F5F5);
+  static const Color textPrimary = Color(0xFF171717);
+  static const Color textSecondary = Color(0xFF737373);
+
   final name = TextEditingController(text: 'Hendrawan Pradipta, S.E., M.M.');
-  final email = TextEditingController(text: 'hendrawan@equityworld-futures.com');
-  final phone = TextEditingController(text: '+62 812-0000-0000');
-  final wpb = TextEditingController(text: 'WPB-BAPPEBTI-88294');
+  final email = TextEditingController(
+    text: 'hendrawan@equityworld-futures.com',
+  );
   final unit = TextEditingController(text: 'Surabaya - Trilium Office Lt. 2');
 
   @override
   void dispose() {
-    name.dispose(); email.dispose(); phone.dispose(); wpb.dispose(); unit.dispose();
+    name.dispose();
+    email.dispose();
+    unit.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+Widget build(BuildContext context) {
+  return Theme(
+    data: Theme.of(context).copyWith(
+      textTheme: GoogleFonts.robotoTextTheme(
+        Theme.of(context).textTheme,
+      ),
+    ),
+    child: Scaffold(
+      backgroundColor: pageBackground,
       appBar: AppBar(
-        title: const Text('Profil & Pengaturan', style: TextStyle(fontWeight: FontWeight.w700)),
-        actions: [
-          IconButton(onPressed: () => Navigator.pushNamed(context, '/notifications'), icon: const Icon(Icons.notifications_none_rounded)),
-        ],
+        backgroundColor: pageBackground,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          'Profil',
+          style: TextStyle(
+            color: textPrimary,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
         children: [
-          _profileHero(),
-          const SizedBox(height: 14),
-          _tabs(),
-          const SizedBox(height: 14),
-          _section('Data Legalitas & Kontak', Icons.assignment_ind_rounded, [
-            _field('Nama Lengkap (Sesuai KTP / SK BAPPEBTI)', name, Icons.person_outline),
-            _field('Email Perusahaan Terverifikasi', email, Icons.mail_outline, suffix: 'Terverifikasi'),
-            _field('Nomor Telepon / WhatsApp Operasional', phone, Icons.call_outlined),
-            _field('Nomor Registrasi / Izin WPB BAPPEBTI', wpb, Icons.verified_user_outlined, suffix: 'Resmi Terdaftar'),
-            _field('Unit Kantor & Afiliasi', unit, Icons.domain_outlined),
-            Row(children: [
-              Expanded(child: OutlinedButton(onPressed: () {}, child: const Text('Reset'))),
-              const SizedBox(width: 10),
-              Expanded(child: FilledButton.icon(onPressed: () => _saved(context), icon: const Icon(Icons.save_outlined, size: 18), label: const Text('Simpan Perubahan'))),
-            ]),
-          ]),
-          const SizedBox(height: 14),
-          _section('Kredensial & Otentikasi', Icons.security_rounded, [
-            _InfoTile(icon: Icons.phonelink_lock_rounded, title: 'Two-Factor Authentication', value: 'Google Authenticator (Aktif)', action: 'Kelola'),
-            _InfoTile(icon: Icons.password_rounded, title: 'Kata Sandi Terminal', value: 'Terakhir diubah 45 hari yang lalu', action: 'Perbarui Password'),
-            _InfoTile(icon: Icons.smartphone_rounded, title: 'Sesi Login Aktif', value: 'Mobile Device • Internal Pulse App', action: 'Online'),
-          ]),
-          const SizedBox(height: 14),
-          _section('Preferensi Tampilan Terminal', Icons.display_settings_rounded, [
-            _ToggleRow(title: 'Streaming Live Ticker Emas (XAU/USD)', subtitle: 'Pembaruan data harga dan spread secara real-time'),
-            _ToggleRow(title: 'Alert Penembusan Pivot & Resistance', subtitle: 'Kirim peringatan instan saat harga menyentuh R1/R2/S1/S2'),
-            const ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.stacked_line_chart_rounded), title: Text('Satuan Dasar Lot Margin', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)), subtitle: Text('1.00 Lot (100 oz)')),
-          ]),
-          const SizedBox(height: 14),
-          _activity(),
-          const SizedBox(height: 14),
+          _profileHeader(),
+          const SizedBox(height: 28),
+          _section(
+            title: 'Informasi Pribadi',
+            children: [
+              _infoRow(
+                icon: Icons.badge_outlined,
+                title: 'Nama lengkap',
+                value: name.text,
+              ),
+              _infoRow(
+                icon: Icons.mail_outline_rounded,
+                title: 'Email perusahaan',
+                value: email.text,
+                trailing: const Icon(
+                  Icons.verified_rounded,
+                  color: Color(0xFF16845B),
+                  size: 19,
+                ),
+              ),
+              _infoRow(
+                icon: Icons.business_outlined,
+                title: 'Unit kantor',
+                value: unit.text,
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _section(
+            title: 'Kredensial & Otentikasi',
+            children: [
+              _actionRow(
+                icon: Icons.lock_outline_rounded,
+                title: 'Perbarui kata sandi',
+                subtitle: 'Ubah kata sandi akun Anda',
+                onTap: _showPasswordDialog,
+              ),
+              _actionRow(
+                icon: Icons.notifications_none_rounded,
+                title: 'Notifikasi',
+                subtitle: 'Atur notifikasi keamanan dan informasi pasar',
+                trailing: Switch(
+                  value: notificationsEnabled,
+                  activeThumbColor: orange,
+                  onChanged: (value) =>
+                      setState(() => notificationsEnabled = value),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _section(
+            title: 'Pengaturan',
+            children: [
+              _actionRow(
+                icon: Icons.palette_outlined,
+                title: 'Tema aplikasi',
+                subtitle: 'Terang',
+                trailing: const Text(
+                  'Terang',
+                  style: TextStyle(
+                    color: textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              _actionRow(
+                icon: Icons.support_agent_rounded,
+                title: 'Hubungi dukungan',
+                subtitle: 'Bantuan untuk akun EWF Gold Hub',
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Fitur dukungan belum dihubungkan.'),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
           OutlinedButton.icon(
             onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
-            icon: const Icon(Icons.logout_rounded),
-            label: const Text('Keluar dari Akun (Logout)'),
-            style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFDC2626)),
+            icon: const Icon(Icons.logout_rounded, size: 19),
+            label: const Text('Keluar dari akun'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFD64545),
+              side: const BorderSide(color: Color(0xFFF0B8B8)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+                    const SizedBox(height: 18),
+          const Center(
+            child: Text(
+              'PT EQUITYWORLD FUTURES • EWF GOLD HUB',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 10,
+                color: Color(0xFF9CA3AF),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ), // Menutup Scaffold
+  );   // Menutup Theme
+}
+
+  bool notificationsEnabled = true;
+
+  Widget _profileHeader() => Column(
+        children: [
+          const SizedBox(height: 8),
+          Container(
+            width: 112,
+            height: 112,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFFFFE5CC),
+            ),
+            child: const Icon(
+              Icons.person_rounded,
+              size: 66,
+              color: orange,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            name.text,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 23,
+              height: 1.2,
+              color: textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            email.text,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14, color: textSecondary),
           ),
           const SizedBox(height: 16),
-          const Center(child: Text('PT EQUITYWORLD FUTURES • Versi Terminal Portal v4.2.1', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8)))),
+          OutlinedButton(
+            onPressed: _showEditProfileDialog,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: orangeDark,
+              side: const BorderSide(color: orange, width: 1.4),
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+              shape: const StadiumBorder(),
+            ),
+            child: const Text(
+              'Edit profil',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      );
+
+  Widget _section({
+    required String title,
+    required List<Widget> children,
+  }) =>
+      Container(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        decoration: BoxDecoration(
+          color: cardBackground,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 17,
+                color: textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...children,
+          ],
+        ),
+      );
+
+  Widget _infoRow({
+    required IconData icon,
+    required String title,
+    required String value,
+    Widget? trailing,
+  }) =>
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        child: Row(
+          children: [
+            Icon(icon, color: textPrimary, size: 22),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (trailing != null) trailing,
+          ],
+        ),
+      );
+
+  Widget _actionRow({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    Widget? trailing,
+    VoidCallback? onTap,
+  }) =>
+      ListTile(
+        onTap: onTap,
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(icon, color: textPrimary, size: 23),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(color: textSecondary, fontSize: 11),
+        ),
+        trailing: trailing ??
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: textSecondary,
+            ),
+      );
+
+  Future<void> _showEditProfileDialog() async {
+    final nameController = TextEditingController(text: name.text);
+    final unitController = TextEditingController(text: unit.text);
+    final formKey = GlobalKey<FormState>();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Edit profil'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Nama lengkap'),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Nama wajib diisi'
+                      : null,
+                ),
+                TextFormField(
+                  controller: unitController,
+                  decoration: const InputDecoration(labelText: 'Unit kantor'),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Unit kantor wajib diisi'
+                      : null,
+                ),
+                TextFormField(
+                  initialValue: email.text,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Email perusahaan (terverifikasi)',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: orange),
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                setState(() {
+                  name.text = nameController.text.trim();
+                  unit.text = unitController.text.trim();
+                });
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Perubahan tampil di aplikasi. Hubungkan API untuk menyimpan ke server.',
+                    ),
+                  ),
+                );
+              }
+            },
+            child: const Text('Simpan'),
+          ),
         ],
       ),
     );
+
+    nameController.dispose();
+    unitController.dispose();
   }
 
-  Widget _profileHero() => Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(14)),
-    child: Row(children: [
-      const CircleAvatar(radius: 34, backgroundColor: Color(0xFFE5EEFF), child: Icon(Icons.person, size: 38, color: Color(0xFF0F172A))),
-      const SizedBox(width: 14),
-      const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('AKUN ANALIS TERVERIFIKASI', style: TextStyle(fontSize: 9, color: Color(0xFFD4AF37), fontWeight: FontWeight.w800, letterSpacing: 1)),
-        SizedBox(height: 6),
-        Text('Hendrawan Pradipta, S.E., M.M.', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-        SizedBox(height: 3),
-        Text('Senior Commodity & Bullion Analyst', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 11)),
-        SizedBox(height: 2),
-        Text('EWF-ID-88294 • Divisi Riset & Analisis Komoditas', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10)),
-      ])),
-    ]),
-  );
+  Future<void> _showPasswordDialog() async {
+    final currentPassword = TextEditingController();
+    final newPassword = TextEditingController();
+    final confirmPassword = TextEditingController();
+    final formKey = GlobalKey<FormState>();
 
-  Widget _tabs() => Row(children: [
-    Expanded(child: FilledButton(onPressed: () {}, child: const Text('Data Pribadi'))),
-    const SizedBox(width: 8),
-    Expanded(child: OutlinedButton(onPressed: () {}, child: const Text('Keamanan'))),
-    const SizedBox(width: 8),
-    Expanded(child: OutlinedButton(onPressed: () {}, child: const Text('Preferensi'))),
-  ]);
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Perbarui kata sandi'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: currentPassword,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Kata sandi saat ini',
+                  ),
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Wajib diisi' : null,
+                ),
+                TextFormField(
+                  controller: newPassword,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Kata sandi baru',
+                  ),
+                  validator: (value) => value == null || value.length < 8
+                      ? 'Minimal 8 karakter'
+                      : null,
+                ),
+                TextFormField(
+                  controller: confirmPassword,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Konfirmasi kata sandi baru',
+                  ),
+                  validator: (value) => value != newPassword.text
+                      ? 'Kata sandi belum cocok'
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: orange),
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Validasi berhasil. Hubungkan endpoint API untuk memperbarui kata sandi.',
+                    ),
+                  ),
+                );
+              }
+            },
+            child: const Text('Lanjutkan'),
+          ),
+        ],
+      ),
+    );
 
-  Widget _section(String title, IconData icon, List<Widget> children) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [Icon(icon, size: 19, color: const Color(0xFFB8860B)), const SizedBox(width: 8), Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700))]),
-      const SizedBox(height: 14),
-      ...children.map((e) => Padding(padding: const EdgeInsets.only(bottom: 12), child: e)),
-    ]),
-  );
-
-  Widget _field(String label, TextEditingController c, IconData icon, {String? suffix}) => TextField(
-    controller: c,
-    decoration: InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon, size: 19),
-      suffixText: suffix,
-      filled: true,
-      fillColor: const Color(0xFFF8FAFC),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(9), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(9), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-    ),
-    style: const TextStyle(fontSize: 13),
-  );
-
-  Widget _activity() => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(color: const Color(0xFFFFFBF0), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF5E8C7))),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Aktivitas & Integritas Analis', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-      const SizedBox(height: 4),
-      const Text('Q3 2024', style: TextStyle(fontSize: 11, color: Color(0xFF8C6D1F), fontWeight: FontWeight.w700)),
-      const SizedBox(height: 14),
-      Row(children: const [
-        Expanded(child: _Stat(value: '142', label: 'Analisis Emas')),
-        Expanded(child: _Stat(value: '94.2%', label: 'Akurasi Pivot')),
-        Expanded(child: _Stat(value: '100%', label: 'Kepatuhan')),
-      ]),
-    ]),
-  );
-
-  void _saved(BuildContext context) => ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Data berhasil diperbarui dan disinkronkan ke server internal.')),
-  );
-}
-
-class _InfoTile extends StatelessWidget {
-  final IconData icon; final String title, value, action;
-  const _InfoTile({required this.icon, required this.title, required this.value, required this.action});
-  @override
-  Widget build(BuildContext context) => ListTile(
-    contentPadding: EdgeInsets.zero,
-    leading: Container(width: 38, height: 38, decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(9)), child: Icon(icon, size: 19)),
-    title: Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-    subtitle: Text(value, style: const TextStyle(fontSize: 11)),
-    trailing: Text(action, style: const TextStyle(fontSize: 10, color: Color(0xFFB8860B), fontWeight: FontWeight.w800)),
-  );
-}
-
-class _ToggleRow extends StatelessWidget {
-  final String title, subtitle;
-  const _ToggleRow({required this.title, required this.subtitle});
-  @override
-  Widget build(BuildContext context) => SwitchListTile(
-    contentPadding: EdgeInsets.zero,
-    value: true,
-    onChanged: (_) {},
-    title: Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-    subtitle: Text(subtitle, style: const TextStyle(fontSize: 10.5)),
-  );
-}
-
-class _Stat extends StatelessWidget {
-  final String value, label;
-  const _Stat({required this.value, required this.label});
-  @override
-  Widget build(BuildContext context) => Column(children: [
-    Text(value, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: Color(0xFF8C6D1F))),
-    const SizedBox(height: 3),
-    Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
-  ]);
+    currentPassword.dispose();
+    newPassword.dispose();
+    confirmPassword.dispose();
+  }
 }

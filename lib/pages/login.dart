@@ -79,7 +79,9 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       // Khusus Android Emulator yang mengakses server di laptop.
-      const baseUrl = 'http://10.0.2.2:8000/api';
+     
+      // URL API untuk HP Android fisik.
+      const baseUrl = 'http://192.168.1.196:8000/api';
 
       final response = await http
           .post(
@@ -88,9 +90,13 @@ class _LoginPageState extends State<LoginPage> {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
             },
-            body: jsonEncode({'email': email, 'password': password}),
+            body: jsonEncode({
+              'email': email,
+              'password': password,
+            }),
           )
           .timeout(const Duration(seconds: 15));
+
 
       debugPrint('Login HTTP status: ${response.statusCode}');
       debugPrint('Login response: ${response.body}');
@@ -219,7 +225,7 @@ class _LoginPageState extends State<LoginPage> {
                             // Ganti URL ini jika base URL API
                             // project kamu disimpan di tempat lain.
                             final uri = Uri.parse(
-                              'http://10.0.2.2:8000/api/forgot-password',
+                              'http://192.168.1.196:8000/api/forgot-password',
                             );
 
                             final response = await http.post(
@@ -292,23 +298,15 @@ class _LoginPageState extends State<LoginPage> {
     FontWeight weight = FontWeight.w400,
     Color color = onSurface,
   }) {
-    return GoogleFonts.plusJakartaSans(
-      fontSize: size,
-      fontWeight: weight,
-      color: color,
-    );
+    return GoogleFonts.roboto(fontSize: size, fontWeight: weight, color: color);
   }
 
   TextStyle mono({
-    double size = 13,
-    FontWeight weight = FontWeight.w500,
+    double size = 12,
+    FontWeight weight = FontWeight.w400,
     Color color = onSurface,
   }) {
-    return GoogleFonts.jetBrainsMono(
-      fontSize: size,
-      fontWeight: weight,
-      color: color,
-    );
+    return GoogleFonts.roboto(fontSize: size, fontWeight: weight, color: color);
   }
 
   InputDecoration inputDecoration({
@@ -318,7 +316,7 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: mono(size: 13, weight: FontWeight.w400, color: secondary),
+      hintStyle: jakarta(size: 12, weight: FontWeight.w400, color: secondary),
       prefixIcon: Icon(icon, color: secondary, size: 20),
       suffixIcon: suffixIcon,
       filled: true,
@@ -341,27 +339,52 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: surface,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: Column(
-                children: [
-                  _buildBranding(),
-                  const SizedBox(height: 8),
-                  _buildLoginCard(),
-                  const SizedBox(height: 16),
-                  _buildSupportCard(),
-                  const SizedBox(height: 32),
-                  _buildFooter(),
-                ],
+    final baseTheme = Theme.of(context);
+
+    return Theme(
+      data: baseTheme.copyWith(
+        textTheme: GoogleFonts.robotoTextTheme(baseTheme.textTheme),
+      ),
+      child: Scaffold(
+        backgroundColor: surface,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Background trading
+            Image.asset(
+              'assets/images/trading_background.png',
+              fit: BoxFit.cover,
+            ),
+
+            // Lapisan putih agar UI tetap terbaca
+            Container(color: Colors.white.withValues(alpha: 0.40)),
+
+            // Konten login
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Column(
+                      children: [
+                        _buildBranding(),
+                        const SizedBox(height: 8),
+                        _buildLoginCard(),
+                        const SizedBox(height: 16),
+                        _buildSupportCard(),
+                        const SizedBox(height: 32),
+                        _buildFooter(),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -372,26 +395,35 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         const SizedBox(height: 4),
 
-        // Logo + nama perusahaan
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
+            // Logo perusahaan
+            SizedBox(
               width: 48,
               height: 48,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: surfaceContainer,
+              child: Image.asset(
+                'assets/images/logo_perusahaan.png',
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(Icons.business, color: primary, size: 28);
+                },
               ),
-              child: const Icon(Icons.trending_up, color: primary, size: 28),
             ),
-            const SizedBox(width: 8),
+
+            const SizedBox(width: 24),
+
+            // Nama perusahaan
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 RichText(
                   text: TextSpan(
-                    style: jakarta(size: 20, weight: FontWeight.w700),
+                    style: GoogleFonts.roboto(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: onSurface,
+                    ),
                     children: const [
                       TextSpan(text: 'EQUITY '),
                       TextSpan(
@@ -404,55 +436,14 @@ class _LoginPageState extends State<LoginPage> {
                 Text(
                   'PT EQUITYWORLD FUTURES',
                   style: jakarta(
-                    size: 10,
-                    weight: FontWeight.w600,
+                    size: 14,
+                    weight: FontWeight.w500,
                     color: secondary,
                   ),
                 ),
               ],
             ),
           ],
-        ),
-
-        const SizedBox(height: 8),
-
-        // Internal Operations Terminal
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-          decoration: BoxDecoration(
-            color: surfaceContainer,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: primaryContainer,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'INTERNAL OPERATIONS TERMINAL',
-                style: jakarta(
-                  size: 10,
-                  weight: FontWeight.w600,
-                  color: onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 4),
-
-        Text(
-          'FUTURES MARKET INTELLIGENCE',
-          textAlign: TextAlign.center,
-          style: jakarta(size: 13, color: secondary),
         ),
       ],
     );
@@ -495,21 +486,7 @@ class _LoginPageState extends State<LoginPage> {
                     Expanded(
                       child: Text(
                         'Masuk ke Platform',
-                        style: jakarta(size: 20, weight: FontWeight.w700),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: surfaceContainer,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        'v4.8.2',
-                        style: mono(size: 11, color: onSurfaceVariant),
+                        style: jakarta(size: 16, weight: FontWeight.w700),
                       ),
                     ),
                   ],
@@ -527,7 +504,7 @@ class _LoginPageState extends State<LoginPage> {
                 // Email
                 Text(
                   'Email Anda',
-                  style: jakarta(size: 13, weight: FontWeight.w600),
+                  style: jakarta(size: 11, weight: FontWeight.w500),
                 ),
 
                 const SizedBox(height: 4),
@@ -535,7 +512,11 @@ class _LoginPageState extends State<LoginPage> {
                 TextField(
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
-                  style: mono(size: 13),
+                  style: GoogleFonts.roboto(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: onSurface,
+                  ),
                   decoration: inputDecoration(
                     hint: 'nama.pengguna@gmail.com',
                     icon: Icons.badge_outlined,
@@ -550,7 +531,7 @@ class _LoginPageState extends State<LoginPage> {
                     Expanded(
                       child: Text(
                         'Kata Sandi Akses',
-                        style: jakarta(size: 13, weight: FontWeight.w600),
+                        style: jakarta(size: 11, weight: FontWeight.w500),
                       ),
                     ),
                     TextButton(
@@ -577,7 +558,7 @@ class _LoginPageState extends State<LoginPage> {
                 TextField(
                   controller: passwordController,
                   obscureText: obscurePassword,
-                  style: mono(size: 13),
+                  style: mono(size: 12),
                   decoration: inputDecoration(
                     hint: '••••••••••••',
                     icon: Icons.key_outlined,
@@ -615,7 +596,7 @@ class _LoginPageState extends State<LoginPage> {
                     Expanded(
                       child: Text(
                         'Ingat sesi di perangkat aman ini',
-                        style: jakarta(size: 13, color: onSurface),
+                        style: jakarta(size: 12, color: onSurface),
                       ),
                     ),
                   ],
@@ -663,7 +644,7 @@ class _LoginPageState extends State<LoginPage> {
                                 Text(
                                   'Memverifikasi Otorisasi...',
                                   style: jakarta(
-                                    size: 13,
+                                    size: 12,
                                     weight: FontWeight.w600,
                                     color: Colors.white,
                                   ),
@@ -834,10 +815,12 @@ class _LoginPageState extends State<LoginPage> {
               color: surfaceContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.headset_mic_outlined,
-              size: 18,
-              color: onSurface,
+            child: Image.asset(
+              'assets/images/logo_perusahaan.png',
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.business, color: primary, size: 28);
+              },
             ),
           ),
           const SizedBox(width: 8),
@@ -851,7 +834,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 Text(
                   'Ext. 4410 (Equity Tower LT. 22)',
-                  style: jakarta(size: 13, color: secondary),
+                  style: jakarta(size: 11, color: secondary),
                 ),
               ],
             ),
@@ -882,13 +865,20 @@ class _LoginPageState extends State<LoginPage> {
         Text(
           'Terdaftar & Diawasi oleh Bappebti • Anggota ICDX & ICH',
           textAlign: TextAlign.center,
-          style: jakarta(size: 10, weight: FontWeight.w600, color: secondary),
+          style: jakarta(
+            size: 10,
+            weight: FontWeight.w600,
+            color: const Color.fromARGB(255, 18, 19, 21),
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           '© 2025 PT Equityworld Futures. Hak Cipta Dilindungi Undang-Undang.',
           textAlign: TextAlign.center,
-          style: jakarta(size: 10, color: secondary),
+          style: jakarta(
+            size: 10,
+            color: const Color.fromARGB(255, 18, 19, 21),
+          ),
         ),
       ],
     );

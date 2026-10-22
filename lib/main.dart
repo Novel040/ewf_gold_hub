@@ -1,4 +1,6 @@
+
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'pages/login.dart';
 
 const Color ewfOrange = Color(0xFFF58220);
@@ -15,16 +17,15 @@ class EwfGoldHubApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme =
-        ColorScheme.fromSeed(
-          seedColor: ewfOrange,
-          brightness: Brightness.light,
-        ).copyWith(
-          primary: ewfOrange,
-          onPrimary: Colors.white,
-          secondary: ewfOrangeDark,
-          surface: Colors.white,
-        );
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: ewfOrange,
+      brightness: Brightness.light,
+    ).copyWith(
+      primary: ewfOrange,
+      onPrimary: Colors.white,
+      secondary: ewfOrangeDark,
+      surface: Colors.white,
+    );
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -32,27 +33,40 @@ class EwfGoldHubApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: colorScheme,
+
+        // Font global seluruh aplikasi
+        fontFamily: GoogleFonts.roboto().fontFamily,
+        textTheme: GoogleFonts.robotoTextTheme(),
+
         scaffoldBackgroundColor: ewfBackground,
+
         appBarTheme: const AppBarTheme(
           backgroundColor: ewfBackground,
           foregroundColor: Color(0xFF1F2937),
           surfaceTintColor: Colors.transparent,
         ),
+
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: ewfOrange,
             foregroundColor: Colors.white,
           ),
         ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+
+        floatingActionButtonTheme:
+            const FloatingActionButtonThemeData(
           backgroundColor: ewfOrange,
           foregroundColor: Colors.white,
         ),
+
         checkboxTheme: CheckboxThemeData(
           fillColor: WidgetStateProperty.resolveWith((states) {
-            return states.contains(WidgetState.selected) ? ewfOrange : null;
+            return states.contains(WidgetState.selected)
+                ? ewfOrange
+                : null;
           }),
         ),
+
         progressIndicatorTheme: const ProgressIndicatorThemeData(
           color: ewfOrange,
         ),

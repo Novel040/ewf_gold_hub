@@ -12,51 +12,56 @@ import 'profile_screen.dart';
 import '../widgets/live_quotes_table.dart';
 import '../widgets/latest_news_section.dart';
 
+
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
-  static const Color background = Color(0xFFF8FAFC);
-  static const Color white = Color(0xFFFFFFFF);
+  
+static const Color background = Color(0xFFF8FAFC);
+static const Color white = Color(0xFFFFFFFF);
 
-  // Tema utama EWF
-  static const Color primary = Color(0xFFF58220);
-  static const Color primaryContainer = Color(0xFFD96812);
+// Warna utama EWF
+static const Color primary = Color(0xFFF58220);
+static const Color primaryContainer = Color(0xFFD96812);
+static const Color primaryLight = Color(0xFFFFC58A);
 
-  // Permukaan dan kartu
-  static const Color surfaceContainer = Color(0xFFFFE5CC);
-  static const Color surfaceContainerLow = Color(0xFFFFF3E8);
+// Warna kartu
+static const Color surfaceContainer = Color(0xFFFFE5CC);
+static const Color surfaceContainerLow = Color(0xFFFFF3E8);
 
-  // Warna teks
-  static const Color textPrimary = Color(0xFF1F2937);
-  static const Color textSecondary = Color(0xFF64748B);
+// Warna teks
+static const Color textPrimary = Color(0xFF1F2937);
+static const Color textSecondary = Color(0xFF64748B);
 
-  // Warna indikator pasar tetap dipertahankan
-  static const Color green = Color(0xFF00866A);
-  static const Color red = Color(0xFFD64545);
+// Warna indikator pasar
+static const Color green = Color(0xFF00866A);
+static const Color red = Color(0xFFD64545);
 
-  TextStyle jakarta({
-    double size = 14,
-    FontWeight weight = FontWeight.w400,
-    Color color = textPrimary,
-  }) {
-    return GoogleFonts.plusJakartaSans(
-      fontSize: size,
-      fontWeight: weight,
-      color: color,
-    );
-  }
 
-  TextStyle mono({
-    double size = 13,
-    FontWeight weight = FontWeight.w500,
-    Color color = textPrimary,
-  }) {
-    return GoogleFonts.jetBrainsMono(
-      fontSize: size,
-      fontWeight: weight,
-      color: color,
-    );
-  }
+  
+TextStyle jakarta({
+  double size = 14,
+  FontWeight weight = FontWeight.w400,
+  Color color = textPrimary,
+}) {
+  return GoogleFonts.roboto(
+    fontSize: size,
+    fontWeight: weight,
+    color: color,
+  );
+}
+
+TextStyle mono({
+  double size = 13,
+  FontWeight weight = FontWeight.w500,
+  Color color = textPrimary,
+}) {
+  return GoogleFonts.roboto(
+    fontSize: size,
+    fontWeight: weight,
+    color: color,
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -72,15 +77,17 @@ class DashboardPage extends StatelessWidget {
         titleSpacing: 16,
         title: Row(
           children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: surfaceContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.trending_up, color: primary),
-            ),
+            
+ClipRRect(
+  borderRadius: BorderRadius.circular(8),
+  child: Image.asset(
+    'assets/images/logo_perusahaan.png',
+    width: 38,
+    height: 38,
+    fit: BoxFit.contain,
+  ),
+),
+
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +99,7 @@ class DashboardPage extends StatelessWidget {
                 Text(
                   'MARKET INTELLIGENCE',
                   style: jakarta(
-                    size: 9,
+                    size: 11,
                     weight: FontWeight.w600,
                     color: textSecondary,
                   ),
@@ -320,14 +327,14 @@ class DashboardPage extends StatelessWidget {
                         color: active ? primary : const Color(0xFF9CA3AF),
                       ),
                       const SizedBox(height: 4),
-                      Text(
+                                            Text(
                         items[index].label,
-                        style: TextStyle(
-                          fontSize: 9,
+                        style: GoogleFonts.roboto(
+                          fontSize: 10,
                           fontWeight: active
-                              ? FontWeight.w800
-                              : FontWeight.w600,
-                          color: active ? primary : const Color(0xFF9CA3AF),
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: active ? primary : textSecondary,
                         ),
                       ),
                     ],
@@ -356,12 +363,19 @@ class DashboardPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.trending_up, color: Colors.white, size: 36),
+                  
+Image.asset(
+  'assets/images/logo_perusahaan.png',
+  width: 48,
+  height: 48,
+  fit: BoxFit.contain,
+),
+
                   const SizedBox(height: 10),
                   Text(
                     'EWF GOLD HUB',
                     style: jakarta(
-                      size: 20,
+                      size: 18,
                       weight: FontWeight.w700,
                       color: Colors.white,
                     ),
@@ -389,6 +403,7 @@ class DashboardPage extends StatelessWidget {
                 Navigator.pop(context);
               },
             ),
+            
 
             // ========================================================
             // BERITA EMAS
@@ -560,14 +575,19 @@ class DashboardPage extends StatelessWidget {
   // WELCOME
   // ============================================================
 
-  Widget _buildWelcome() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Dashboard', style: jakarta(size: 24, weight: FontWeight.w700)),
-      ],
-    );
-  }
+  
+Widget _buildWelcome() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Dashboard',
+        style: jakarta(size: 22, weight: FontWeight.w700),
+      ),
+    ],
+  );
+}
+
 
   // ============================================================
   // LIVE CHART PLACEHOLDER
@@ -627,14 +647,14 @@ class DashboardPage extends StatelessWidget {
                   ],
                 ),
               ),
-              const Text(
-                'TRADINGVIEW',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF2962FF),
-                ),
-              ),
+              Text(
+  'TRADINGVIEW',
+  style: GoogleFonts.roboto(
+    fontSize: 10,
+    fontWeight: FontWeight.w700,
+    color: const Color(0xFF2962FF),
+  ),
+),
             ],
           ),
           const SizedBox(height: 16),
