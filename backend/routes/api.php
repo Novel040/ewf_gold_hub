@@ -15,7 +15,7 @@ use App\Http\Controllers\Api\NewsController;
 Route::get('/gold-prices', [GoldPriceController::class, 'index']);
 Route::get('/gold-prices/latest', [GoldPriceController::class, 'latest']);
 Route::get('/news', [NewsController::class, 'index']);
-Route::get('/pivot-point', [PivotPointController::class, 'index']);
+Route::get('/pivot-points', [PivotPointController::class, 'index']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 // Verifikasi email

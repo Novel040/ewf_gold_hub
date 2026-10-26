@@ -13,6 +13,7 @@ class DaftarAkunPage extends StatefulWidget {
 
 class _DaftarAkunPageState extends State<DaftarAkunPage> {
   final namaController = TextEditingController();
+  final unitKantorController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final konfirmasiController = TextEditingController();
@@ -43,6 +44,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
   void dispose() {
     namaController.dispose();
     emailController.dispose();
+    unitKantorController.dispose();
     passwordController.dispose();
     konfirmasiController.dispose();
     super.dispose();
@@ -173,11 +175,13 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
     final nama = namaController.text.trim();
     final email = emailController.text.trim();
+    final unitKantor = unitKantorController.text.trim();
     final password = passwordController.text;
     final konfirmasi = konfirmasiController.text;
 
     if (nama.isEmpty ||
         email.isEmpty ||
+        unitKantor.isEmpty ||
         password.isEmpty ||
         konfirmasi.isEmpty) {
       showStatus(
@@ -242,6 +246,7 @@ final response = await http.post(
   body: jsonEncode({
     'name': namaController.text.trim(),
     'email': emailController.text.trim(),
+    'work_location': unitKantorController.text.trim(),
     'password': passwordController.text,
     'password_confirmation': konfirmasiController.text,
   }),
@@ -262,6 +267,7 @@ if (response.statusCode == 201 || response.statusCode == 200) {
   // Kosongkan form setelah pendaftaran berhasil.
   namaController.clear();
   emailController.clear();
+  unitKantorController.clear();
   passwordController.clear();
   konfirmasiController.clear();
 
@@ -506,6 +512,17 @@ if (response.statusCode == 201 || response.statusCode == 200) {
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 16),
+
+const SizedBox(height: 16),
+
+buildTextField(
+  label: 'Lokasi Kerja / Kantor',
+  hint: 'Contoh: Surabaya - Trilium Office Lt. 2',
+  icon: Icons.business_outlined,
+  controller: unitKantorController,
+),
+
+const SizedBox(height: 16),
 
                 buildTextField(
                   label: 'Kata Sandi',

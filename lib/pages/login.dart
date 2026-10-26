@@ -81,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
       // Khusus Android Emulator yang mengakses server di laptop.
      
       // URL API untuk HP Android fisik.
-      const baseUrl = 'http://192.168.1.196:8000/api';
+      const baseUrl = 'http://10.0.2.2/api';
 
       final response = await http
           .post(
@@ -128,7 +128,13 @@ class _LoginPageState extends State<LoginPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const DashboardPage()),
+          MaterialPageRoute(
+  builder: (context) => DashboardPage(
+    user: data['user'] is Map
+        ? Map<String, dynamic>.from(data['user'] as Map)
+        : null,
+  ),
+),
         );
       } else {
         final message = data is Map
@@ -225,7 +231,7 @@ class _LoginPageState extends State<LoginPage> {
                             // Ganti URL ini jika base URL API
                             // project kamu disimpan di tempat lain.
                             final uri = Uri.parse(
-                              'http://192.168.1.196:8000/api/forgot-password',
+                              'http://10.0.2.2:8000/api/forgot-password',
                             );
 
                             final response = await http.post(

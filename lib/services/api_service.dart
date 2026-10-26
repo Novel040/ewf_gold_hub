@@ -49,19 +49,56 @@ class ApiService {
     return null;
   }
 
+  
   static Future<PivotPoint> getPivotPoint(String commodity) async {
+    // Backend menerima kode komoditas LGD atau HSI.
+    final symbol = commodity.toUpperCase() == 'XAUUSD'
+        ? 'LGD'
+        : commodity.toUpperCase();
+
     final response = await http.get(
-      Uri.parse(
-        '$baseUrl/pivot-point?commodity=${Uri.encodeQueryComponent(commodity)}',
+      Uri.parse('$baseUrl/pivot-points').replace(
+        queryParameters: {'commodity': symbol},
       ),
     );
 
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body);
-
-      return PivotPoint.fromJson(json['data'] as Map<String, dynamic>);
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Gagal mengambil data pivot point: ${response.statusCode} '
+        '${response.body}',
+      );
     }
 
-    throw Exception('Gagal mengambil data pivot point: ${response.statusCode}');
+    final decoded = jsonDecode(response.body);
+
+    if (decoded is Map<String, dynamic>) {
+      final data = decoded['data'];
+
+      if (data is Map<String, dynamic>) {
+        return PivotPoint.fromJson(data);
+      }
+
+      if (decoded.containsKey('pivot')) {
+        return PivotPoint.fromJson(decoded);
+      }
+    }
+
+    if (decoded is List) {
+      final items = decoded.whereType<Map<String, dynamic>>().toList();
+
+      final matchingItems = items.where(
+        (item) =>
+            (item['symbol'] ?? item['commodity'] ?? '')
+                .toString()
+                .toUpperCase() ==
+            symbol,
+      );
+
+      if (matchingItems.isNotEmpty) {
+        return PivotPoint.fromJson(matchingItems.first);
+      }
+    }
+
+    throw Exception('Format respons Pivot Point tidak sesuai.');
   }
 }

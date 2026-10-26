@@ -12,10 +12,15 @@ import 'notifications_screen.dart';
 import 'profile_screen.dart';
 import '../widgets/live_quotes_table.dart';
 import '../widgets/latest_news_section.dart';
+import 'login.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  final Map<String, dynamic>? user;
 
+  const DashboardPage({
+    super.key,
+    this.user,
+  });
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
@@ -136,7 +141,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ProfileScreen(),
+                    builder: (context) => ProfileScreen(
+  user: widget.user,
+),
                   ),
                 );
               },
@@ -530,7 +537,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.logout_outlined,
               title: 'Keluar',
               onTap: () {
-                Navigator.pop(context);
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                  (route) => false,
+                );
               },
             ),
 

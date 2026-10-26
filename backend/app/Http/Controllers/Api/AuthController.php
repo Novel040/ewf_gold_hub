@@ -17,12 +17,14 @@ class AuthController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'work_location' => ['required', 'string', 'max:255'],
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => strtolower($validated['email']),
             'password' => Hash::make($validated['password']),
+            'work_location' => $validated['work_location'],
         ]);
 
         event(new Registered($user));
@@ -35,6 +37,7 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'email_verified_at' => $user->email_verified_at,
+                'work_location' => $user->work_location,
             ],
         ], 201);
     }
@@ -104,6 +107,7 @@ public function resendVerificationEmail(Request $request)
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'work_location' => $user->work_location,
             ],
         ]);
     }

@@ -10,151 +10,79 @@ class PivotPointController extends Controller
 {
     public function index(Request $request)
     {
-        // Ambil commodity dari request
-        // Default: LGD
         $commodity = strtoupper(
             $request->query('commodity', 'LGD')
         );
 
-        // Validasi commodity
         if (!in_array($commodity, ['LGD', 'HSI'])) {
             return response()->json([
-                'message' => 'Commodity tidak valid. Gunakan LGD atau HSI.',
+                'success' => false,
+                'message' => 'Commodity harus LGD atau HSI.',
                 'data' => null,
             ], 400);
         }
 
-        // Ambil data harga terbaru berdasarkan commodity
-        $goldPrice = GoldPrice::where('commodity', $commodity)
+        $price = GoldPrice::where('commodity', $commodity)
             ->orderByDesc('recorded_at')
             ->first();
 
-        // Jika data belum tersedia
-        if (!$goldPrice) {
+        if (!$price) {
             return response()->json([
+                'success' => false,
                 'message' => "Data harga {$commodity} belum tersedia.",
                 'data' => null,
             ], 404);
         }
 
-        // Harga OHLC
-        $open = (float) $goldPrice->open;
-        $high = (float) $goldPrice->high;
-        $low = (float) $goldPrice->low;
-        $close = (float) $goldPrice->close;
+        $high = (float) $price->high;
+        $low = (float) $price->low;
+        $close = (float) $price->close;
 
-        // =====================================================
-        // PIVOT POINT
-        // =====================================================
-
-        // Pivot Point = (High + Low + Close) / 3
-        $pp = ($high + $low + $close) / 3;
-
-        // Range = High - Low
+        $pivot = ($high + $low + $close) / 3;
         $range = $high - $low;
 
-        // =====================================================
-        // RESISTANCE
-        // =====================================================
+        $r1 = (2 * $pivot) - $low;
+        $r2 = $pivot + $range;
+        $r3 = $pivot + (2 * $range);
+        $r4 = $pivot + (3 * $range);
 
-        // R1 = 2 × Pivot - Low
-        $r1 = (2 * $pp) - $low;
-
-        // R2 = Pivot + Range
-        $r2 = $pp + $range;
-
-        // R3 = Pivot + Range × 2
-        $r3 = $pp + ($range * 2);
-
-        // R4 = Pivot + Range × 3
-        $r4 = $pp + ($range * 3);
-
-        // =====================================================
-        // SUPPORT
-        // =====================================================
-
-        // S1 = 2 × Pivot - High
-        $s1 = (2 * $pp) - $high;
-
-        // S2 = Pivot - Range
-        $s2 = $pp - $range;
-
-        // S3 = Pivot - Range × 2
-        $s3 = $pp - ($range * 2);
-
-        // S4 = Pivot - Range × 3
-        $s4 = $pp - ($range * 3);
-
-        // =====================================================
-        // BUY / SELL / NEST
-        // =====================================================
-
-        $buy = $r1;
-        $sell = $s1;
-
-        // NEST = titik tengah antara S1 dan R1
-        $nest = ($s1 + $r1) / 2;
-
-        // =====================================================
-        // UNIT
-        // =====================================================
-
-        $unit = $commodity === 'HSI'
-            ? 'INDEX'
-            : 'USD / t.oz';
-
-        // =====================================================
-        // RESPONSE
-        // =====================================================
+        $s1 = (2 * $pivot) - $high;
+        $s2 = $pivot - $range;
+        $s3 = $pivot - (2 * $range);
+        $s4 = $pivot - (3 * $range);
 
         return response()->json([
             'success' => true,
-            'message' => 'Data pivot point berhasil diambil.',
-
+            'message' => 'Data Pivot Point berhasil diambil.',
             'data' => [
                 'commodity' => $commodity,
-
-                'date' => $goldPrice->recorded_at?->format('Y-m-d'),
-
-                // Data sumber OHLC
+                'date' => $price->recorded_at?->format('Y-m-d'),
                 'source' => [
-                    'open' => $open,
+                    'open' => (float) $price->open,
                     'high' => $high,
                     'low' => $low,
                     'close' => $close,
                 ],
-
-                // Pivot
-                'pivot' => round($pp, 2),
-
-                // Buy / Sell
-                'buy' => round($buy, 2),
-                'sell' => round($sell, 2),
-
-                // Range
+                'pivot' => round($pivot, 2),
+                'buy' => round($r1, 2),
+                'sell' => round($s1, 2),
                 'range' => round($range, 2),
-
-                // Resistance
                 'resistance' => [
                     'r1' => round($r1, 2),
                     'r2' => round($r2, 2),
                     'r3' => round($r3, 2),
                     'r4' => round($r4, 2),
                 ],
-
-                // Support
                 'support' => [
                     's1' => round($s1, 2),
                     's2' => round($s2, 2),
                     's3' => round($s3, 2),
                     's4' => round($s4, 2),
                 ],
-
-                // Nest
-                'nest' => round($nest, 2),
-
-                // Unit
-                'unit' => $unit,
+                'nest' => round(($s1 + $r1) / 2, 2),
+                'unit' => $commodity === 'HSI'
+                    ? 'INDEX'
+                    : 'USD / t.oz',
             ],
         ]);
     }

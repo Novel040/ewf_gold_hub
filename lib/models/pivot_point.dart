@@ -52,7 +52,8 @@ class PivotPoint {
     final source = json['source'] as Map<String, dynamic>? ?? {};
 
     return PivotPoint(
-      commodity: json['commodity']?.toString() ?? '',
+      commodity:
+          json['commodity']?.toString() ?? json['symbol']?.toString() ?? '',
       date: json['date']?.toString() ?? '',
 
       open: _toDouble(source['open']),

@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'login.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final Map<String, dynamic>? user;
+
+  const ProfileScreen({
+    super.key,
+    this.user,
+  });
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -16,12 +22,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const Color textPrimary = Color(0xFF171717);
   static const Color textSecondary = Color(0xFF737373);
 
-  final name = TextEditingController(text: 'Hendrawan Pradipta, S.E., M.M.');
-  final email = TextEditingController(
-    text: 'hendrawan@equityworld-futures.com',
-  );
-  final unit = TextEditingController(text: 'Surabaya - Trilium Office Lt. 2');
+  late final TextEditingController name;
+late final TextEditingController email;
+late final TextEditingController unit;
 
+@override
+void initState() {
+  super.initState();
+
+  final user = widget.user;
+
+  name = TextEditingController(
+    text: user?['name']?.toString() ?? '',
+  );
+  email = TextEditingController(
+    text: user?['email']?.toString() ?? '',
+  );
+  unit = TextEditingController(
+    text: user?['work_location']?.toString() ?? '',
+  );
+}
   @override
   void dispose() {
     name.dispose();
@@ -31,200 +51,195 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Theme(
-    data: Theme.of(context).copyWith(
-      textTheme: GoogleFonts.robotoTextTheme(
-        Theme.of(context).textTheme,
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        textTheme: GoogleFonts.robotoTextTheme(Theme.of(context).textTheme),
       ),
-    ),
-    child: Scaffold(
-      backgroundColor: pageBackground,
-      appBar: AppBar(
+      child: Scaffold(
         backgroundColor: pageBackground,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text(
-          'Profil',
-          style: TextStyle(
-            color: textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
+        appBar: AppBar(
+          backgroundColor: pageBackground,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          title: const Text(
+            'Profil',
+            style: TextStyle(
+              color: textPrimary,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-        children: [
-          _profileHeader(),
-          const SizedBox(height: 28),
-          _section(
-            title: 'Informasi Pribadi',
-            children: [
-              _infoRow(
-                icon: Icons.badge_outlined,
-                title: 'Nama lengkap',
-                value: name.text,
-              ),
-              _infoRow(
-                icon: Icons.mail_outline_rounded,
-                title: 'Email perusahaan',
-                value: email.text,
-                trailing: const Icon(
-                  Icons.verified_rounded,
-                  color: Color(0xFF16845B),
-                  size: 19,
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          children: [
+            _profileHeader(),
+            const SizedBox(height: 28),
+            _section(
+              title: 'Informasi Pribadi',
+              children: [
+                _infoRow(
+                  icon: Icons.badge_outlined,
+                  title: 'Nama lengkap',
+                  value: name.text,
                 ),
-              ),
-              _infoRow(
-                icon: Icons.business_outlined,
-                title: 'Unit kantor',
-                value: unit.text,
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          _section(
-            title: 'Kredensial & Otentikasi',
-            children: [
-              _actionRow(
-                icon: Icons.lock_outline_rounded,
-                title: 'Perbarui kata sandi',
-                subtitle: 'Ubah kata sandi akun Anda',
-                onTap: _showPasswordDialog,
-              ),
-              _actionRow(
-                icon: Icons.notifications_none_rounded,
-                title: 'Notifikasi',
-                subtitle: 'Atur notifikasi keamanan dan informasi pasar',
-                trailing: Switch(
-                  value: notificationsEnabled,
-                  activeThumbColor: orange,
-                  onChanged: (value) =>
-                      setState(() => notificationsEnabled = value),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          _section(
-            title: 'Pengaturan',
-            children: [
-              _actionRow(
-                icon: Icons.palette_outlined,
-                title: 'Tema aplikasi',
-                subtitle: 'Terang',
-                trailing: const Text(
-                  'Terang',
-                  style: TextStyle(
-                    color: textSecondary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                _infoRow(
+                  icon: Icons.mail_outline_rounded,
+                  title: 'Email perusahaan',
+                  value: email.text,
+                  trailing: const Icon(
+                    Icons.verified_rounded,
+                    color: Color(0xFF16845B),
+                    size: 19,
                   ),
                 ),
-              ),
-              _actionRow(
-                icon: Icons.support_agent_rounded,
-                title: 'Hubungi dukungan',
-                subtitle: 'Bantuan untuk akun EWF Gold Hub',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Fitur dukungan belum dihubungkan.'),
+                _infoRow(
+                  icon: Icons.business_outlined,
+                  title: 'Unit kantor',
+                  value: unit.text,
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            _section(
+              title: 'Kredensial & Otentikasi',
+              children: [
+                _actionRow(
+                  icon: Icons.lock_outline_rounded,
+                  title: 'Perbarui kata sandi',
+                  subtitle: 'Ubah kata sandi akun Anda',
+                  onTap: _showPasswordDialog,
+                ),
+                _actionRow(
+                  icon: Icons.notifications_none_rounded,
+                  title: 'Notifikasi',
+                  subtitle: 'Atur notifikasi keamanan dan informasi pasar',
+                  trailing: Switch(
+                    value: notificationsEnabled,
+                    activeThumbColor: orange,
+                    onChanged: (value) =>
+                        setState(() => notificationsEnabled = value),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            _section(
+              title: 'Pengaturan',
+              children: [
+                _actionRow(
+                  icon: Icons.palette_outlined,
+                  title: 'Tema aplikasi',
+                  subtitle: 'Terang',
+                  trailing: const Text(
+                    'Terang',
+                    style: TextStyle(
+                      color: textSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                     ),
-                  );
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
-            icon: const Icon(Icons.logout_rounded, size: 19),
-            label: const Text('Keluar dari akun'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFD64545),
-              side: const BorderSide(color: Color(0xFFF0B8B8)),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                _actionRow(
+                  icon: Icons.support_agent_rounded,
+                  title: 'Hubungi dukungan',
+                  subtitle: 'Bantuan untuk akun EWF Gold Hub',
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Fitur dukungan belum dihubungkan.'),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                  (route) => false,
+                );
+              },
+              icon: const Icon(Icons.logout_rounded, size: 19),
+              label: const Text('Keluar dari akun'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFD64545),
+                side: const BorderSide(color: Color(0xFFF0B8B8)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
-          ),
-                    const SizedBox(height: 18),
-          const Center(
-            child: Text(
-              'PT EQUITYWORLD FUTURES • EWF GOLD HUB',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 10,
-                color: Color(0xFF9CA3AF),
+
+            const SizedBox(height: 18),
+            const Center(
+              child: Text(
+                'PT EQUITYWORLD FUTURES • EWF GOLD HUB',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
               ),
             ),
-          ),
-        ],
-      ),
-    ), // Menutup Scaffold
-  );   // Menutup Theme
-}
+          ],
+        ),
+      ), // Menutup Scaffold
+    ); // Menutup Theme
+  }
 
   bool notificationsEnabled = true;
 
   Widget _profileHeader() => Column(
-        children: [
-          const SizedBox(height: 8),
-          Container(
-            width: 112,
-            height: 112,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFFFFE5CC),
-            ),
-            child: const Icon(
-              Icons.person_rounded,
-              size: 66,
-              color: orange,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            name.text,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 23,
-              height: 1.2,
-              color: textPrimary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            email.text,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, color: textSecondary),
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: _showEditProfileDialog,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: orangeDark,
-              side: const BorderSide(color: orange, width: 1.4),
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-              shape: const StadiumBorder(),
-            ),
-            child: const Text(
-              'Edit profil',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      );
+    children: [
+      const SizedBox(height: 8),
+      Container(
+        width: 112,
+        height: 112,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: Color(0xFFFFE5CC),
+        ),
+        child: const Icon(Icons.person_rounded, size: 66, color: orange),
+      ),
+      const SizedBox(height: 14),
+      Text(
+        name.text,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 23,
+          height: 1.2,
+          color: textPrimary,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      const SizedBox(height: 6),
+      Text(
+        email.text,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 14, color: textSecondary),
+      ),
+      const SizedBox(height: 16),
+      OutlinedButton(
+        onPressed: _showEditProfileDialog,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: orangeDark,
+          side: const BorderSide(color: orange, width: 1.4),
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+          shape: const StadiumBorder(),
+        ),
+        child: const Text(
+          'Edit profil',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+    ],
+  );
 
-  Widget _section({
-    required String title,
-    required List<Widget> children,
-  }) =>
+  Widget _section({required String title, required List<Widget> children}) =>
       Container(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         decoration: BoxDecoration(
@@ -253,40 +268,36 @@ Widget build(BuildContext context) {
     required String title,
     required String value,
     Widget? trailing,
-  }) =>
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 9),
-        child: Row(
-          children: [
-            Icon(icon, color: textPrimary, size: 22),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: textPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+  }) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 9),
+    child: Row(
+      children: [
+        Icon(icon, color: textPrimary, size: 22),
+        const SizedBox(width: 13),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontSize: 12, color: textSecondary),
               ),
-            ),
-            if (trailing != null) trailing,
-          ],
+              const SizedBox(height: 3),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
-      );
+        if (trailing != null) trailing,
+      ],
+    ),
+  );
 
   Widget _actionRow({
     required IconData icon,
@@ -294,29 +305,26 @@ Widget build(BuildContext context) {
     required String subtitle,
     Widget? trailing,
     VoidCallback? onTap,
-  }) =>
-      ListTile(
-        onTap: onTap,
-        contentPadding: EdgeInsets.zero,
-        leading: Icon(icon, color: textPrimary, size: 23),
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: textPrimary,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: const TextStyle(color: textSecondary, fontSize: 11),
-        ),
-        trailing: trailing ??
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: textSecondary,
-            ),
-      );
+  }) => ListTile(
+    onTap: onTap,
+    contentPadding: EdgeInsets.zero,
+    leading: Icon(icon, color: textPrimary, size: 23),
+    title: Text(
+      title,
+      style: const TextStyle(
+        color: textPrimary,
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+    subtitle: Text(
+      subtitle,
+      style: const TextStyle(color: textSecondary, fontSize: 11),
+    ),
+    trailing:
+        trailing ??
+        const Icon(Icons.chevron_right_rounded, color: textSecondary),
+  );
 
   Future<void> _showEditProfileDialog() async {
     final nameController = TextEditingController(text: name.text);

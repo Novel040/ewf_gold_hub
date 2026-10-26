@@ -151,6 +151,11 @@ class _LatestNewsSectionState extends State<LatestNewsSection> {
           style: TextStyle(fontSize: 12, color: _muted),
         ),
         const SizedBox(height: 12),
+
+        if (!_loading && !_failed && _news.isNotEmpty) ...[
+          _NewsTicker(news: _news, onTap: _openArticle),
+          const SizedBox(height: 12),
+        ],
         if (_loading)
           const SizedBox(
             height: 190,
@@ -299,6 +304,174 @@ class _LatestNewsSectionState extends State<LatestNewsSection> {
       color: const Color(0xFFFFF3E8),
       alignment: Alignment.center,
       child: const Icon(Icons.newspaper_outlined, size: 36, color: _orange),
+    );
+  }
+}
+
+class _NewsTicker extends StatefulWidget {
+  final List<Map<String, dynamic>> news;
+  final ValueChanged<Map<String, dynamic>> onTap;
+
+  const _NewsTicker({required this.news, required this.onTap});
+
+  @override
+  State<_NewsTicker> createState() => _NewsTickerState();
+}
+
+class _NewsTickerState extends State<_NewsTicker>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animationController;
+  double _contentWidth = 0;
+  final GlobalKey _tickerContentKey = GlobalKey();
+
+  static const double _speed = 45;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _NewsTicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.news != widget.news) {
+      _animationController.stop();
+      _contentWidth = 0;
+    }
+  }
+
+  void _startAnimation(double width) {
+    if (!mounted || width <= 0) return;
+
+    if ((_contentWidth - width).abs() < 1 && _animationController.isAnimating) {
+      return;
+    }
+
+    _contentWidth = width;
+
+    _animationController.duration = Duration(
+      milliseconds: (width / _speed * 1000).round().clamp(1000, 3600000),
+    );
+
+    _animationController.repeat();
+  }
+
+  Widget _buildNewsItems() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: widget.news.map((item) {
+        return InkWell(
+          onTap: () => widget.onTap(item),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.circle, size: 7, color: Color(0xFFF58220)),
+                const SizedBox(width: 8),
+                Text(
+                  (item['title'] ?? '').toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.news.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      height: 40,
+      clipBehavior: Clip.hardEdge,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1F2937),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Container(
+            height: 40,
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            color: const Color(0xFFF58220),
+            child: const Text(
+              'TOP NEWS',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+
+          Expanded(
+            child: ClipRect(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+
+                    final keyContext = _tickerContentKey.currentContext;
+                    final renderObject = keyContext?.findRenderObject();
+
+                    if (renderObject is RenderBox && renderObject.hasSize) {
+                      final measuredWidth = renderObject.size.width / 2;
+
+                      if (measuredWidth > 0 &&
+                          (_contentWidth - measuredWidth).abs() >= 1) {
+                        _startAnimation(measuredWidth);
+                      } else if (measuredWidth > 0 &&
+                          !_animationController.isAnimating) {
+                        _startAnimation(measuredWidth);
+                      }
+                    }
+                  });
+
+                  return OverflowBox(
+                    alignment: Alignment.centerLeft,
+                    minWidth: 0,
+                    maxWidth: double.infinity,
+                    child: AnimatedBuilder(
+                      animation: _animationController,
+                      builder: (context, child) {
+                        return Transform.translate(
+                          offset: Offset(
+                            -_animationController.value * _contentWidth,
+                            0,
+                          ),
+                          child: child,
+                        );
+                      },
+                      child: Row(
+                        key: _tickerContentKey,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [_buildNewsItems(), _buildNewsItems()],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
