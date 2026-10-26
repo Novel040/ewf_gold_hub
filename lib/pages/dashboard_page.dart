@@ -1,3 +1,4 @@
+import '../services/live_quote_service.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,56 +13,64 @@ import 'profile_screen.dart';
 import '../widgets/live_quotes_table.dart';
 import '../widgets/latest_news_section.dart';
 
-
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
-  
-static const Color background = Color(0xFFF8FAFC);
-static const Color white = Color(0xFFFFFFFF);
-
-// Warna utama EWF
-static const Color primary = Color(0xFFF58220);
-static const Color primaryContainer = Color(0xFFD96812);
-static const Color primaryLight = Color(0xFFFFC58A);
-
-// Warna kartu
-static const Color surfaceContainer = Color(0xFFFFE5CC);
-static const Color surfaceContainerLow = Color(0xFFFFF3E8);
-
-// Warna teks
-static const Color textPrimary = Color(0xFF1F2937);
-static const Color textSecondary = Color(0xFF64748B);
-
-// Warna indikator pasar
-static const Color green = Color(0xFF00866A);
-static const Color red = Color(0xFFD64545);
-
-
-  
-TextStyle jakarta({
-  double size = 14,
-  FontWeight weight = FontWeight.w400,
-  Color color = textPrimary,
-}) {
-  return GoogleFonts.roboto(
-    fontSize: size,
-    fontWeight: weight,
-    color: color,
-  );
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
 }
 
-TextStyle mono({
-  double size = 13,
-  FontWeight weight = FontWeight.w500,
-  Color color = textPrimary,
-}) {
-  return GoogleFonts.roboto(
-    fontSize: size,
-    fontWeight: weight,
-    color: color,
-  );
-}
+class _DashboardPageState extends State<DashboardPage> {
+  late final LiveQuoteService _liveQuoteService;
+
+  @override
+  void initState() {
+    super.initState();
+    _liveQuoteService = LiveQuoteService();
+    _liveQuoteService.start();
+  }
+
+  @override
+  void dispose() {
+    _liveQuoteService.dispose();
+    super.dispose();
+  }
+
+  static const Color background = Color(0xFFF8FAFC);
+  static const Color white = Color(0xFFFFFFFF);
+
+  // Warna utama EWF
+  static const Color primary = Color(0xFFF58220);
+  static const Color primaryContainer = Color(0xFFD96812);
+  static const Color primaryLight = Color(0xFFFFC58A);
+
+  // Warna kartu
+  static const Color surfaceContainer = Color(0xFFFFE5CC);
+  static const Color surfaceContainerLow = Color(0xFFFFF3E8);
+
+  // Warna teks
+  static const Color textPrimary = Color(0xFF1F2937);
+  static const Color textSecondary = Color(0xFF64748B);
+
+  TextStyle jakarta({
+    double size = 14,
+    FontWeight weight = FontWeight.w400,
+    Color color = textPrimary,
+  }) {
+    return GoogleFonts.plusJakartaSans(
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+    );
+  }
+
+  TextStyle mono({
+    double size = 13,
+    FontWeight weight = FontWeight.w500,
+    Color color = textPrimary,
+  }) {
+    return GoogleFonts.roboto(fontSize: size, fontWeight: weight, color: color);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,16 +86,15 @@ TextStyle mono({
         titleSpacing: 16,
         title: Row(
           children: [
-            
-ClipRRect(
-  borderRadius: BorderRadius.circular(8),
-  child: Image.asset(
-    'assets/images/logo_perusahaan.png',
-    width: 38,
-    height: 38,
-    fit: BoxFit.contain,
-  ),
-),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/images/logo_perusahaan.png',
+                width: 38,
+                height: 38,
+                fit: BoxFit.contain,
+              ),
+            ),
 
             const SizedBox(width: 10),
             Column(
@@ -276,7 +284,9 @@ ClipRRect(
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const HargaEmasPage(),
+                            builder: (context) => HargaEmasPage(
+                              liveQuoteService: _liveQuoteService,
+                            ),
                           ),
                         );
                         break;
@@ -327,7 +337,7 @@ ClipRRect(
                         color: active ? primary : const Color(0xFF9CA3AF),
                       ),
                       const SizedBox(height: 4),
-                                            Text(
+                      Text(
                         items[index].label,
                         style: GoogleFonts.roboto(
                           fontSize: 10,
@@ -363,13 +373,12 @@ ClipRRect(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  
-Image.asset(
-  'assets/images/logo_perusahaan.png',
-  width: 48,
-  height: 48,
-  fit: BoxFit.contain,
-),
+                  Image.asset(
+                    'assets/images/logo_perusahaan.png',
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.contain,
+                  ),
 
                   const SizedBox(height: 10),
                   Text(
@@ -403,7 +412,6 @@ Image.asset(
                 Navigator.pop(context);
               },
             ),
-            
 
             // ========================================================
             // BERITA EMAS
@@ -452,7 +460,8 @@ Image.asset(
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const HargaEmasPage(),
+                    builder: (context) =>
+                        HargaEmasPage(liveQuoteService: _liveQuoteService),
                   ),
                 );
               },
@@ -575,19 +584,14 @@ Image.asset(
   // WELCOME
   // ============================================================
 
-  
-Widget _buildWelcome() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        'Dashboard',
-        style: jakarta(size: 22, weight: FontWeight.w700),
-      ),
-    ],
-  );
-}
-
+  Widget _buildWelcome() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Dashboard', style: jakarta(size: 22, weight: FontWeight.w700)),
+      ],
+    );
+  }
 
   // ============================================================
   // LIVE CHART PLACEHOLDER
@@ -599,8 +603,6 @@ Widget _buildWelcome() {
     required Color color,
   }) {
     final bool isGold = title.toUpperCase().contains('XUL');
-    final String symbol = isGold ? 'OANDA:XAUUSD' : 'TVC:HSI';
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -648,20 +650,28 @@ Widget _buildWelcome() {
                 ),
               ),
               Text(
-  'TRADINGVIEW',
-  style: GoogleFonts.roboto(
-    fontSize: 10,
-    fontWeight: FontWeight.w700,
-    color: const Color(0xFF2962FF),
-  ),
-),
+                'TRADINGVIEW',
+                style: GoogleFonts.roboto(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF2962FF),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
-          SizedBox(height: 320, child: _TradingViewChart(symbol: symbol)),
+
+          SizedBox(
+            height: 320,
+            child: isGold
+                ? const _TradingViewChart(symbol: 'OANDA:XAUUSD')
+                : const _TradingViewChart(symbol: 'INDEX:HSI'),
+          ),
           const SizedBox(height: 8),
           Text(
-            'Grafik dari TradingView. Harga dan ketersediaan simbol mengikuti penyedia data.',
+            isGold
+                ? 'Grafik XAUUSD dari TradingView.'
+                : 'Grafik indeks Hang Seng dari TradingView; bukan harga kontrak HKK50_BBJ.',
             style: jakarta(size: 10, color: textSecondary),
           ),
         ],
@@ -673,8 +683,12 @@ Widget _buildWelcome() {
   // LIVE QUOTES TABLE
   // ============================================================
 
+  // ============================================================
+  // LIVE QUOTES TABLE
+  // ============================================================
+
   Widget _buildLiveQuotesTable() {
-    return const LiveQuotesTable();
+    return LiveQuotesTable(service: _liveQuoteService);
   }
 
   // ============================================================
@@ -854,7 +868,7 @@ class _TradingViewChartState extends State<_TradingViewChart> {
     new TradingView.widget({
       autosize: true,
       symbol: "${widget.symbol}",
-      interval: "15",
+      interval: "D",
       timezone: "Asia/Jakarta",
       theme: "light",
       style: "1",
@@ -873,182 +887,5 @@ class _TradingViewChartState extends State<_TradingViewChart> {
   @override
   Widget build(BuildContext context) {
     return WebViewWidget(controller: _controller);
-  }
-}
-
-class _DemoPriceChart extends StatelessWidget {
-  final Color color;
-  final List<double> prices;
-
-  const _DemoPriceChart({required this.color, required this.prices});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _DemoPriceChartPainter(color: color, prices: prices),
-      child: const SizedBox.expand(),
-    );
-  }
-}
-
-class _DemoPriceChartPainter extends CustomPainter {
-  final Color color;
-  final List<double> prices;
-
-  const _DemoPriceChartPainter({required this.color, required this.prices});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (prices.length < 2 || size.width <= 0 || size.height <= 0) {
-      return;
-    }
-
-    const left = 12.0;
-    const right = 12.0;
-    const top = 20.0;
-    const bottom = 24.0;
-
-    final chart = Rect.fromLTRB(
-      left,
-      top,
-      size.width - right,
-      size.height - bottom,
-    );
-
-    if (chart.width <= 0 || chart.height <= 0) {
-      return;
-    }
-
-    final gridPaint = Paint()
-      ..color = color.withValues(alpha: 0.13)
-      ..strokeWidth = 0.8;
-
-    for (int i = 0; i <= 4; i++) {
-      final y = chart.top + chart.height * i / 4;
-      canvas.drawLine(Offset(chart.left, y), Offset(chart.right, y), gridPaint);
-    }
-
-    for (int i = 0; i <= 6; i++) {
-      final x = chart.left + chart.width * i / 6;
-      canvas.drawLine(Offset(x, chart.top), Offset(x, chart.bottom), gridPaint);
-    }
-
-    final minPrice = prices.reduce((a, b) => a < b ? a : b);
-    final maxPrice = prices.reduce((a, b) => a > b ? a : b);
-    final range = maxPrice - minPrice;
-    final safeRange = range == 0 ? 1.0 : range;
-
-    final points = List<Offset>.generate(prices.length, (i) {
-      final x = chart.left + chart.width * i / (prices.length - 1);
-
-      final normalized = (prices[i] - minPrice) / safeRange;
-
-      final y = chart.bottom - chart.height * (0.10 + normalized * 0.78);
-
-      return Offset(x, y);
-    });
-
-    final linePath = Path()..moveTo(points.first.dx, points.first.dy);
-
-    for (int i = 0; i < points.length - 1; i++) {
-      final current = points[i];
-      final next = points[i + 1];
-      final midX = (current.dx + next.dx) / 2;
-
-      linePath.cubicTo(midX, current.dy, midX, next.dy, next.dx, next.dy);
-    }
-
-    final areaPath = Path.from(linePath)
-      ..lineTo(points.last.dx, chart.bottom)
-      ..lineTo(points.first.dx, chart.bottom)
-      ..close();
-
-    canvas.drawPath(
-      areaPath,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            color.withValues(alpha: 0.24),
-            color.withValues(alpha: 0.01),
-          ],
-        ).createShader(chart),
-    );
-
-    canvas.drawPath(
-      linePath,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.2
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
-
-    final last = points.last;
-
-    final dashPaint = Paint()
-      ..color = color.withValues(alpha: 0.45)
-      ..strokeWidth = 1;
-
-    for (double x = last.dx; x < chart.right; x += 8) {
-      canvas.drawLine(
-        Offset(x, last.dy),
-        Offset((x + 4).clamp(last.dx, chart.right), last.dy),
-        dashPaint,
-      );
-    }
-
-    canvas.drawCircle(last, 5, Paint()..color = Colors.white);
-
-    canvas.drawCircle(last, 3, Paint()..color = color);
-
-    final label = TextPainter(
-      text: TextSpan(
-        text: prices.last.toStringAsFixed(1),
-        style: TextStyle(
-          color: color,
-          fontSize: 9,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    label.paint(
-      canvas,
-      Offset(
-        (last.dx - label.width).clamp(chart.left, chart.right - label.width),
-        (last.dy - label.height - 7).clamp(0.0, size.height - label.height),
-      ),
-    );
-
-    const labels = ['09:00', '11:00', '13:00', '15:00'];
-
-    for (int i = 0; i < labels.length; i++) {
-      final text = TextPainter(
-        text: TextSpan(
-          text: labels[i],
-          style: const TextStyle(color: Color(0xFF8993A4), fontSize: 8),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-
-      final x = chart.left + chart.width * i / (labels.length - 1);
-
-      text.paint(
-        canvas,
-        Offset(
-          (x - text.width / 2).clamp(0.0, size.width - text.width),
-          chart.bottom + 7,
-        ),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _DemoPriceChartPainter oldDelegate) {
-    return oldDelegate.color != color || oldDelegate.prices != prices;
   }
 }

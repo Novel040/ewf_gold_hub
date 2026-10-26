@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-
+import '../services/live_quote_service.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -16,7 +16,9 @@ import 'histori_page.dart';
 import 'informasi_pt_page.dart';
 
 class HargaEmasPage extends StatefulWidget {
-  const HargaEmasPage({super.key});
+  final LiveQuoteService? liveQuoteService;
+
+  const HargaEmasPage({super.key, this.liveQuoteService});
 
   @override
   State<HargaEmasPage> createState() => _HargaEmasPageState();
@@ -112,7 +114,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
   DateTime _startDate = DateTime(2026, 9, 24);
   DateTime _endDate = DateTime(2026, 10, 1);
 
-  final List<String> _assets = ['LGD (Loco Gold)', 'HSI', 'SNI'];
+  final List<String> _assets = ['XUL', 'HKK', 'JPK'];
 
   final List<String> _periods = ['Hari Ini', '7 Hari', '30 Hari', 'Kustom'];
 
@@ -715,42 +717,54 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
 
   Widget _buildSettlementCard() {
     final now = DateTime.now();
-final today = DateTime(now.year, now.month, now.day);
-final yesterday = today.subtract(const Duration(days: 1));
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
 
-final commodity = switch (_selectedAsset) {
-  1 => 'HSI',
-  2 => 'SNI',
-  _ => 'LGD',
-};
+    final commodity = switch (_selectedAsset) {
+      1 => 'HSI',
+      2 => 'SNI',
+      _ => 'LGD',
+    };
 
-final yesterdayPrice = _priceForDate(commodity, yesterday);
-final todayPrice = _priceForDate(commodity, today);
+    final yesterdayPrice = _priceForDate(commodity, yesterday);
+    final closeYesterday = yesterdayPrice?.close;
 
-final closeYesterday = yesterdayPrice?.close;
-final openToday = todayPrice?.open;
+    // Ambil open dari service live yang dibagikan Dashboard.
+    final liveQuote = switch (_selectedAsset) {
+      0 => widget.liveQuoteService?.quotes['XUL10'],
+      1 => widget.liveQuoteService?.quotes['HKK50_BBJ'],
+      _ => null,
+    };
 
-final signal = closeYesterday == null || openToday == null
-    ? 'MENUNGGU DATA'
-    : closeYesterday < openToday
-        ? 'SELL'
+    final quoteTime = liveQuote?.sourceTime;
+    final quoteIsFresh =
+        quoteTime != null &&
+        !quoteTime.isAfter(now) &&
+        now.difference(quoteTime) <= const Duration(minutes: 5);
+
+    final openToday = quoteIsFresh ? liveQuote?.open : null;
+
+    final signal = closeYesterday == null || openToday == null
+        ? 'MENUNGGU DATA'
         : closeYesterday > openToday
-            ? 'BUY'
-            : 'NETRAL';
+        ? 'BUY'
+        : closeYesterday < openToday
+        ? 'SELL'
+        : 'NETRAL';
 
-final signalColor = signal == 'BUY'
-    ? const Color(0xFF22C55E)
-    : signal == 'SELL'
+    final signalColor = signal == 'BUY'
+        ? const Color(0xFF22C55E)
+        : signal == 'SELL'
         ? const Color(0xFFEF4444)
         : const Color(0xFFF59E0B);
 
-final item = _selectedPrice;
-final close = item?.close ?? item?.price ?? 0;
-final change = item?.open == null ? 0 : close - item!.open!;
-final changePercent = item?.open == null || item!.open == 0
-    ? 0
-    : (change / item.open!) * 100;
-final positive = change >= 0;
+    final item = _selectedPrice;
+    final close = item?.close ?? item?.price ?? 0;
+    final change = item?.open == null ? 0 : close - item!.open!;
+    final changePercent = item?.open == null || item!.open == 0
+        ? 0
+        : (change / item.open!) * 100;
+    final positive = change >= 0;
 
     return Container(
       width: double.infinity,
@@ -781,7 +795,7 @@ final positive = change >= 0;
               ),
               const SizedBox(width: 8),
               const Text(
-                'Harga Tren (Nest)',
+                'HARGA TREND (NEST)',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 12,
@@ -796,7 +810,7 @@ final positive = change >= 0;
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  _selectedAsset == 1 ? 'INDEX' : 'USD / t.oz',
+                  _assets[_selectedAsset],
                   style: const TextStyle(
                     color: Color(0xFFD1D5DB),
                     fontSize: 10,
@@ -860,110 +874,110 @@ final positive = change >= 0;
                 top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
               ),
             ),
-           child: Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Close Kemarin',
-                style: TextStyle(
-                  color: Color(0xFF9CA3AF),
-                  fontSize: 11,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Close Kemarin',
+                            style: TextStyle(
+                              color: Color(0xFF9CA3AF),
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            closeYesterday == null
+                                ? '-'
+                                : _formatPrice(closeYesterday),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Open Hari Ini',
+                            style: TextStyle(
+                              color: Color(0xFF9CA3AF),
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            openToday == null ? '-' : _formatPrice(openToday),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                closeYesterday == null
-                    ? '-'
-                    : _formatPrice(closeYesterday),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: signalColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: signalColor.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        signal == 'BUY'
+                            ? Icons.trending_up
+                            : signal == 'SELL'
+                            ? Icons.trending_down
+                            : Icons.info_outline,
+                        color: signalColor,
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Sinyal Nest',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        signal,
+                        style: TextStyle(
+                          color: signalColor,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Open Hari Ini',
-                style: TextStyle(
-                  color: Color(0xFF9CA3AF),
-                  fontSize: 11,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                openToday == null ? '-' : _formatPrice(openToday),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-    const SizedBox(height: 16),
-    Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 12,
-      ),
-      decoration: BoxDecoration(
-        color: signalColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: signalColor.withValues(alpha: 0.35),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            signal == 'BUY'
-                ? Icons.trending_up
-                : signal == 'SELL'
-                    ? Icons.trending_down
-                    : Icons.info_outline,
-            color: signalColor,
-          ),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Text(
-              'Sinyal Nest',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
+              ],
             ),
-          ),
-          Text(
-            signal,
-            style: TextStyle(
-              color: signalColor,
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    ),
-  ],
-),
           ),
           if (priceError != null) ...[
             const SizedBox(height: 12),

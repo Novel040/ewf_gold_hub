@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 import '../services/live_quote_service.dart';
 
 class LiveQuotesTable extends StatefulWidget {
-  const LiveQuotesTable({super.key});
+  final LiveQuoteService service;
+
+  const LiveQuotesTable({
+    super.key,
+    required this.service,
+  });
 
   @override
   State<LiveQuotesTable> createState() => _LiveQuotesTableState();
@@ -18,23 +23,21 @@ class _LiveQuotesTableState extends State<LiveQuotesTable> {
   static const Color _secondary = Color(0xFF64748B);
 
   @override
-  void initState() {
-    super.initState();
-    _service = LiveQuoteService();
-    _service.addListener(_onUpdate);
-    _service.start();
-  }
+void initState() {
+  super.initState();
+  _service = widget.service;
+  _service.addListener(_onUpdate);
+}
 
   void _onUpdate() {
     if (mounted) setState(() {});
   }
 
   @override
-  void dispose() {
-    _service.removeListener(_onUpdate);
-    _service.dispose();
-    super.dispose();
-  }
+void dispose() {
+  _service.removeListener(_onUpdate);
+  super.dispose();
+}
 
   String _formatPrice(double? value) {
     if (value == null) return '—';
@@ -83,31 +86,41 @@ class _LiveQuotesTableState extends State<LiveQuotesTable> {
     );
   }
 
-  Widget _freshnessText(LiveQuote? quote) {
-    if (quote?.sourceTime == null) {
-      return const Text(
-        'Menunggu data harga dari sumber',
-        style: TextStyle(fontSize: 10, color: _secondary),
-      );
-    }
+Widget _freshnessText(LiveQuote? gold, LiveQuote? hkk) {
+  final times = [gold?.sourceTime, hkk?.sourceTime]
+      .whereType<DateTime>()
+      .toList();
 
-    final fresh =
-        quote!.sourceTime != null &&
-        DateTime.now().difference(quote.sourceTime!) >= Duration.zero &&
-        DateTime.now().difference(quote.sourceTime!) <=
-            const Duration(minutes: 5);
-
-    return Text(
-      fresh
-          ? 'Waktu sumber: ${_formatTime(quote.sourceTime)}'
-          : 'Data lama · ${_formatTime(quote.sourceTime)}',
-      style: TextStyle(
-        fontSize: 10,
-        color: fresh ? _green : _red,
-        fontWeight: FontWeight.w500,
-      ),
+  if (times.isEmpty) {
+    return const Text(
+      'Menunggu data harga dari sumber',
+      style: TextStyle(fontSize: 10, color: _secondary),
     );
   }
+
+  times.sort((a, b) => b.compareTo(a));
+  final latest = times.first;
+final goldFresh = _service.hasFreshGoldPrice;
+final hkkFresh = _service.hasFreshHkkPrice;
+final bothFresh = goldFresh && hkkFresh;
+
+final statusText = bothFresh
+    ? 'Data pasar diperbarui'
+    : !goldFresh && !hkkFresh
+        ? 'Menunggu pembaruan harga XUL dan HKK'
+        : !goldFresh
+            ? 'Menunggu pembaruan harga XUL'
+            : 'Menunggu pembaruan harga HKK';
+
+return Text(
+  '$statusText · ${_formatTime(latest)}',
+  style: TextStyle(
+    fontSize: 10,
+    color: bothFresh ? _green : _red,
+    fontWeight: FontWeight.w500,
+  ),
+);
+}
 
   @override
   Widget build(BuildContext context) {
@@ -200,15 +213,13 @@ class _LiveQuotesTableState extends State<LiveQuotesTable> {
             ),
           ),
           const SizedBox(height: 8),
-          _freshnessText(gold),
-          const SizedBox(height: 4),
-          _freshnessText(hkk),
+          _freshnessText(gold, hkk),
           const SizedBox(height: 8),
           const Text(
-            'Harga hanya dianggap baru jika waktu dari sumber berusia '
-            'maksimal 5 menit. Data di luar batas ini ditandai sebagai data lama.',
-            style: TextStyle(fontSize: 10, color: _secondary),
-          ),
+  'Data dianggap terbaru jika waktu sumber masing-masing instrumen '
+  'berusia maksimal 5 menit.',
+  style: TextStyle(fontSize: 10, color: _secondary),
+),
         ],
       ),
     );
