@@ -291,9 +291,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => HargaEmasPage(
-                              liveQuoteService: _liveQuoteService,
-                            ),
+                            builder: (context) => const HargaEmasPage(),
                           ),
                         );
                         break;
@@ -468,7 +466,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   context,
                   MaterialPageRoute(
                     builder: (context) =>
-                        HargaEmasPage(liveQuoteService: _liveQuoteService),
+                        const HargaEmasPage(),
                   ),
                 );
               },

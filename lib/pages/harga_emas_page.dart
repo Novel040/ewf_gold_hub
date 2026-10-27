@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-import '../services/live_quote_service.dart';
+
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -16,15 +17,21 @@ import 'histori_page.dart';
 import 'informasi_pt_page.dart';
 
 class HargaEmasPage extends StatefulWidget {
-  final LiveQuoteService? liveQuoteService;
-
-  const HargaEmasPage({super.key, this.liveQuoteService});
+  const HargaEmasPage({super.key});
 
   @override
   State<HargaEmasPage> createState() => _HargaEmasPageState();
 }
 
 class _HargaEmasPageState extends State<HargaEmasPage> {
+  // Palet warna standar EWF Gold Hub
+  static const Color background = Color(0xFFF8FAFC);
+  static const Color primary = Color(0xFFF58220);
+  static const Color primaryDark = Color(0xFFD96812);
+  static const Color primaryLight = Color(0xFFFFF3E8);
+  static const Color textPrimary = Color(0xFF1F2937);
+  static const Color textSecondary = Color(0xFF64748B);
+  static const Color surface = Color(0xFFFFFFFF);
   GoldPrice? lgdPrice;
   GoldPrice? hsiPrice;
   GoldPrice? sniPrice;
@@ -114,7 +121,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
   DateTime _startDate = DateTime(2026, 9, 24);
   DateTime _endDate = DateTime(2026, 10, 1);
 
-  final List<String> _assets = ['XUL', 'HKK', 'JPK'];
+  final List<String> _assets = ['LGD (Loco Gold)', 'HSI', 'SNI'];
 
   final List<String> _periods = ['Hari Ini', '7 Hari', '30 Hari', 'Kustom'];
 
@@ -274,16 +281,6 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
       default:
         return lgdPrice;
     }
-  }
-
-  String _selectedPriceText() {
-    final item = _selectedPrice;
-
-    if (item == null) {
-      return '-';
-    }
-
-    return _formatPrice(item.close ?? item.price);
   }
 
   // ============================================================
@@ -447,12 +444,88 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FB),
+    return DefaultTextStyle.merge(
+      style: GoogleFonts.roboto(),
+      child: Scaffold(
+      backgroundColor: background,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        titleSpacing: 16,
+        title: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Image.asset(
+                'assets/images/logo_perusahaan.png',
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(
+                    Icons.trending_up,
+                    color: Color(0xFFD96812),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'EQUITY PULSE',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+                Text(
+                  'MARKET INTELLIGENCE',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(
+              Icons.notifications_none,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: Color(0xFFFFF3E8),
+              child: Text(
+                'A',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFD96812),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
@@ -480,114 +553,6 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
         ),
       ),
       bottomNavigationBar: _buildBottomNavigation(),
-    );
-  }
-
-  // ============================================================
-  // HEADER
-  // ============================================================
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-      ),
-      child: Row(
-        children: [
-          // BACK TO DASHBOARD
-          IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 19),
-            color: const Color(0xFF111827),
-            tooltip: 'Kembali ke Dashboard',
-          ),
-
-          const SizedBox(width: 2),
-
-          // LOGO
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFF111827),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.show_chart, color: Colors.white, size: 22),
-          ),
-
-          const SizedBox(width: 10),
-
-          // TITLE
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'EQUITY PULSE',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
-                    color: Color(0xFF111827),
-                  ),
-                ),
-                SizedBox(height: 2),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 7,
-                      height: 7,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Color(0xFF16A34A),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 5),
-                    Text(
-                      'MARKET OPEN',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF16A34A),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // NOTIFICATION
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.notifications_none_rounded,
-              color: Color(0xFF374151),
-            ),
-          ),
-
-          // PROFILE
-          Container(
-            width: 36,
-            height: 36,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE5E7EB),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.person_outline,
-              color: Color(0xFF374151),
-              size: 20,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -597,57 +562,14 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
   // ============================================================
 
   Widget _buildPageTitle() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Data Harga Emas',
-          style: TextStyle(
-            fontSize: 27,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF111827),
-            height: 1.15,
-          ),
-        ),
-        const SizedBox(height: 7),
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Data Pasar & Kuotasi OHLC Terverifikasi',
-                style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFECFDF5),
-                borderRadius: BorderRadius.circular(7),
-                border: Border.all(color: const Color(0xFFBBF7D0)),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.verified_outlined,
-                    size: 13,
-                    color: Color(0xFF15803D),
-                  ),
-                  SizedBox(width: 5),
-                  Text(
-                    'Source: News Maker',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF15803D),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ],
+    return const Text(
+      'Data Harga Emas',
+      style: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w800,
+        color: textPrimary,
+        height: 1.15,
+      ),
     );
   }
 
@@ -680,12 +602,14 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                 duration: const Duration(milliseconds: 180),
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white : Colors.transparent,
+                  color: isSelected
+    ? const Color(0xFFF58220)
+    : const Color(0xFFFFF3E8),
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
+                            color: const Color(0xFFF58220).withValues(alpha: 0.10),
                             blurRadius: 5,
                             offset: const Offset(0, 2),
                           ),
@@ -699,8 +623,8 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                     color: isSelected
-                        ? const Color(0xFF111827)
-                        : const Color(0xFF6B7280),
+    ? Colors.white
+    : const Color(0xFF64748B),
                   ),
                 ),
               ),
@@ -715,289 +639,233 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
   // LIVE SETTLEMENT CARD
   // ============================================================
 
-  Widget _buildSettlementCard() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
+Widget _buildSettlementCard() {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final yesterday = today.subtract(const Duration(days: 1));
 
-    final commodity = switch (_selectedAsset) {
-      1 => 'HSI',
-      2 => 'SNI',
-      _ => 'LGD',
-    };
+  final commodity = switch (_selectedAsset) {
+    1 => 'HSI',
+    2 => 'SNI',
+    _ => 'LGD',
+  };
 
-    final yesterdayPrice = _priceForDate(commodity, yesterday);
-    final closeYesterday = yesterdayPrice?.close;
+  
+  final yesterdayPrice = _priceForDate(commodity, yesterday);
 
-    // Ambil open dari service live yang dibagikan Dashboard.
-    final liveQuote = switch (_selectedAsset) {
-      0 => widget.liveQuoteService?.quotes['XUL10'],
-      1 => widget.liveQuoteService?.quotes['HKK50_BBJ'],
-      _ => null,
-    };
+  final openYesterday = yesterdayPrice?.open;
+  final closeYesterday = yesterdayPrice?.close;
 
-    final quoteTime = liveQuote?.sourceTime;
-    final quoteIsFresh =
-        quoteTime != null &&
-        !quoteTime.isAfter(now) &&
-        now.difference(quoteTime) <= const Duration(minutes: 5);
+  // Rumus sinyal berdasarkan Open dan Close Kemarin.
+  final signal = openYesterday == null || closeYesterday == null
+      ? 'MENUNGGU DATA'
+      : closeYesterday > openYesterday
+          ? 'BUY'
+          : closeYesterday < openYesterday
+              ? 'SELL'
+              : 'NETRAL';
 
-    final openToday = quoteIsFresh ? liveQuote?.open : null;
 
-    final signal = closeYesterday == null || openToday == null
-        ? 'MENUNGGU DATA'
-        : closeYesterday > openToday
-        ? 'BUY'
-        : closeYesterday < openToday
-        ? 'SELL'
-        : 'NETRAL';
+  final signalColor = signal == 'BUY'
+      ? const Color(0xFF00866A)
+      : signal == 'SELL'
+          ? const Color(0xFFD64545)
+          : const Color(0xFFB7791F);
 
-    final signalColor = signal == 'BUY'
-        ? const Color(0xFF22C55E)
-        : signal == 'SELL'
-        ? const Color(0xFFEF4444)
-        : const Color(0xFFF59E0B);
+  final signalBg = signal == 'BUY'
+      ? const Color(0xFFE7F7EF)
+      : signal == 'SELL'
+          ? const Color(0xFFFFEEEE)
+          : const Color(0xFFFFF4DF);
 
-    final item = _selectedPrice;
-    final close = item?.close ?? item?.price ?? 0;
-    final change = item?.open == null ? 0 : close - item!.open!;
-    final changePercent = item?.open == null || item!.open == 0
-        ? 0
-        : (change / item.open!) * 100;
-    final positive = change >= 0;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF111827),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 18,
-            offset: const Offset(0, 7),
+  Widget priceRow({
+    required String label,
+    required double? value,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF64748B),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
           ),
-        ],
+        ),
+        const SizedBox(height: 5),
+        Text(
+          value == null ? 'Menunggu data' : _formatPrice(value),
+          style: const TextStyle(
+            color: Color(0xFF1F2937),
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
+
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFFCF7),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: const Color(0xFFF0DCC4),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 9,
-                height: 9,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF22C55E),
-                  shape: BoxShape.circle,
-                ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.045),
+          blurRadius: 14,
+          offset: const Offset(0, 5),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header NEST
+        Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF0DF),
+                borderRadius: BorderRadius.circular(10),
               ),
-              const SizedBox(width: 8),
-              const Text(
-                'HARGA TREND (NEST)',
+              child: const Icon(
+                Icons.show_chart_rounded,
+                color: Color(0xFFD97732),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'NEST',
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
+                  color: Color(0xFF1F2937),
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  _assets[_selectedAsset],
-                  style: const TextStyle(
-                    color: Color(0xFFD1D5DB),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Text(
-                  _selectedPriceText(),
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 34,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -1,
-                  ),
-                ),
-              ),
-              if (item != null) ...[
-                const SizedBox(width: 10),
-                Container(
-                  margin: const EdgeInsets.only(bottom: 5),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: positive
-                        ? const Color(0xFF14532D)
-                        : const Color(0xFF7F1D1D),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '${positive ? '+' : ''}'
-                    '${_formatPrice(change.toDouble())} '
-                    '(${positive ? '+' : ''}${changePercent.toStringAsFixed(2)}%)',
-                    style: TextStyle(
-                      color: positive
-                          ? const Color(0xFF86EFAC)
-                          : const Color(0xFFFCA5A5),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.only(top: 15),
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Close Kemarin',
-                            style: TextStyle(
-                              color: Color(0xFF9CA3AF),
-                              fontSize: 11,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            closeYesterday == null
-                                ? '-'
-                                : _formatPrice(closeYesterday),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Open Hari Ini',
-                            style: TextStyle(
-                              color: Color(0xFF9CA3AF),
-                              fontSize: 11,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            openToday == null ? '-' : _formatPrice(openToday),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: signalColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: signalColor.withValues(alpha: 0.35),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        signal == 'BUY'
-                            ? Icons.trending_up
-                            : signal == 'SELL'
-                            ? Icons.trending_down
-                            : Icons.info_outline,
-                        color: signalColor,
-                      ),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          'Sinyal Nest',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        signal,
-                        style: TextStyle(
-                          color: signalColor,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (priceError != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              priceError!,
-              style: const TextStyle(color: Color(0xFFFCA5A5), fontSize: 10),
             ),
           ],
-          if (isLoadingPrices) ...[
-            const SizedBox(height: 12),
-            const LinearProgressIndicator(
-              minHeight: 2,
-              color: Color(0xFF22C55E),
-              backgroundColor: Color(0xFF374151),
+        ),
+
+        const SizedBox(height: 18),
+
+        // CK dan OH di kiri, sinyal di kanan
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+  priceRow(
+    label: 'Open Kemarin',
+    value: openYesterday,
+  ),
+  const SizedBox(height: 14),
+  priceRow(
+    label: 'Close Kemarin',
+    value: closeYesterday,
+  ),
+],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              constraints: const BoxConstraints(
+                minWidth: 88,
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color: signalBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: signalColor.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Text(
+                signal,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: signalColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
           ],
+        ),
+
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 14),
+          child: Divider(
+            height: 1,
+            color: Color(0xFFE9DCCB),
+          ),
+        ),
+
+        // Penjelasan NEST
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(
+              Icons.info_outline_rounded,
+              color: Color(0xFFD97732),
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                signal == 'MENUNGGU DATA'
+                    ? ' NEST adalah indikator untuk membantu membaca peluang arah pergerakan harga berdasarkan perbandingan Close Kemarin (CK) dan Open Hari Ini (OH).'
+                    : signal == 'NETRAL'
+                        ? 'Penjelasan NEST: Close Kemarin sama dengan Open Hari Ini, sehingga belum ada perbedaan harga untuk menentukan sinyal.'
+                        : 'Penjelasan NEST: sinyal $signal ditentukan dari perbandingan Close Kemarin dengan Open Hari Ini. Ini merupakan indikator awal, bukan jaminan arah harga.',
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 11,
+                  height: 1.45,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        if (priceError != null) ...[
+          const SizedBox(height: 10),
+          Text(
+            priceError!,
+            style: const TextStyle(
+              color: Color(0xFFD64545),
+              fontSize: 10,
+            ),
+          ),
         ],
-      ),
-    );
-  }
+
+        if (isLoadingPrices) ...[
+          const SizedBox(height: 12),
+          const LinearProgressIndicator(
+            minHeight: 2,
+            color: Color(0xFFF58220),
+            backgroundColor: Color(0xFFFFE8D1),
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
 
   // ============================================================
   // FILTER CARD
@@ -1010,52 +878,12 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.tune_rounded,
-                size: 19,
-                color: Color(0xFF374151),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Filter Parameter',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.circle, size: 7, color: Color(0xFF16A34A)),
-                    SizedBox(width: 5),
-                    Text(
-                      'Real-time Feed',
-                      style: TextStyle(
-                        color: Color(0xFF15803D),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 2),
 
           // PERIOD
           SingleChildScrollView(
@@ -1081,8 +909,8 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                       ),
                       decoration: BoxDecoration(
                         color: selected
-                            ? const Color(0xFF111827)
-                            : const Color(0xFFF3F4F6),
+    ? const Color(0xFFF58220)
+    : const Color(0xFFFFF3E8),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -1091,8 +919,8 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: selected
-                              ? Colors.white
-                              : const Color(0xFF6B7280),
+    ? Colors.white
+    : const Color(0xFF64748B),
                         ),
                       ),
                     ),
@@ -1136,7 +964,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                   icon: const Icon(Icons.filter_alt_outlined, size: 17),
                   label: const Text('Terapkan Filter'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF111827),
+                    backgroundColor: primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 13),
@@ -1156,7 +984,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                 icon: const Icon(Icons.download_outlined, size: 17),
                 label: const Text('Export'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF374151),
+                  foregroundColor: textPrimary,
                   side: const BorderSide(color: Color(0xFFD1D5DB)),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -1188,16 +1016,16 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
+          color: background,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
         child: Row(
           children: [
             const Icon(
               Icons.calendar_today_outlined,
               size: 15,
-              color: Color(0xFF6B7280),
+              color: textSecondary,
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -1208,7 +1036,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                     label,
                     style: const TextStyle(
                       fontSize: 9,
-                      color: Color(0xFF9CA3AF),
+                      color: textSecondary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -1218,7 +1046,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF374151),
+                      color: textPrimary,
                     ),
                   ),
                 ],
@@ -1244,14 +1072,14 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
         child: const Center(
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 30),
             child: Text(
               'Data historis belum tersedia',
-              style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              style: TextStyle(fontSize: 12, color: textSecondary),
             ),
           ),
         ),
@@ -1270,7 +1098,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1287,13 +1115,13 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF111827),
+                        color: textPrimary,
                       ),
                     ),
                     SizedBox(height: 4),
                     Text(
                       'Pergerakan historis dari data News Maker',
-                      style: TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
+                      style: TextStyle(fontSize: 10, color: textSecondary),
                     ),
                   ],
                 ),
@@ -1301,7 +1129,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
+                  color: primaryLight,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Row(
@@ -1325,9 +1153,9 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
+              color: background,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1336,7 +1164,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                   selectedPoint.date,
                   style: const TextStyle(
                     fontSize: 10,
-                    color: Color(0xFF6B7280),
+                    color: textSecondary,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -1345,7 +1173,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF111827),
+                    color: textPrimary,
                   ),
                 ),
               ],
@@ -1403,7 +1231,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         children: [
@@ -1420,7 +1248,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF111827),
+                          color: textPrimary,
                         ),
                       ),
                       SizedBox(height: 4),
@@ -1428,7 +1256,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                         'Data Open, High, Low & Close',
                         style: TextStyle(
                           fontSize: 10,
-                          color: Color(0xFF9CA3AF),
+                          color: textSecondary,
                         ),
                       ),
                     ],
@@ -1440,7 +1268,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
+                    color: primaryLight,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -1448,7 +1276,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                     style: const TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF6B7280),
+                      color: textSecondary,
                     ),
                   ),
                 ),
@@ -1466,11 +1294,11 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
               headingTextStyle: const TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF6B7280),
+                color: textSecondary,
               ),
               dataTextStyle: const TextStyle(
                 fontSize: 10,
-                color: Color(0xFF374151),
+                color: textPrimary,
               ),
               columns: const [
                 DataColumn(label: Text('Tanggal')),
@@ -1510,7 +1338,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                         ),
                         decoration: BoxDecoration(
                           color: positive
-                              ? const Color(0xFFECFDF5)
+                              ? primaryLight
                               : const Color(0xFFFEF2F2),
                           borderRadius: BorderRadius.circular(5),
                         ),
@@ -1520,7 +1348,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                             fontSize: 9,
                             fontWeight: FontWeight.w800,
                             color: positive
-                                ? const Color(0xFF15803D)
+                                ? primaryDark
                                 : const Color(0xFFDC2626),
                           ),
                         ),
@@ -1566,7 +1394,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         children: [
@@ -1574,13 +1402,13 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
             children: [
               const Text(
                 'Baris per halaman:',
-                style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                style: TextStyle(fontSize: 10, color: textSecondary),
               ),
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
+                  color: primaryLight,
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: const Text(
@@ -1591,7 +1419,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
               const Spacer(),
               Text(
                 'Menampilkan $start-$end dari $totalData data',
-                style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                style: const TextStyle(fontSize: 10, color: textSecondary),
               ),
             ],
           ),
@@ -1634,7 +1462,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: _currentPage == page
-                            ? const Color(0xFF111827)
+                            ? primary
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(7),
                       ),
@@ -1645,7 +1473,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                           fontWeight: FontWeight.w700,
                           color: _currentPage == page
                               ? Colors.white
-                              : const Color(0xFF6B7280),
+                              : textSecondary,
                         ),
                       ),
                     ),
@@ -1656,7 +1484,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                 const SizedBox(width: 3),
                 const Text(
                   '...',
-                  style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 11),
+                  style: TextStyle(color: textSecondary, fontSize: 11),
                 ),
                 const SizedBox(width: 3),
                 GestureDetector(
@@ -1675,8 +1503,8 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: _currentPage == totalPages
-                            ? const Color(0xFF111827)
-                            : const Color(0xFF6B7280),
+                            ? primary
+                            : textSecondary,
                       ),
                     ),
                   ),
@@ -1721,13 +1549,13 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
         height: 30,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: enabled ? const Color(0xFFF3F4F6) : const Color(0xFFF9FAFB),
+          color: enabled ? primaryLight : background,
           borderRadius: BorderRadius.circular(7),
         ),
         child: Icon(
           icon,
           size: 17,
-          color: enabled ? const Color(0xFF374151) : const Color(0xFFD1D5DB),
+          color: enabled ? primary : const Color(0xFFCBD5E1),
         ),
       ),
     );
@@ -1752,7 +1580,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
       _BottomNavItem(
         icon: Icons.show_chart,
         activeIcon: Icons.show_chart,
-        label: 'Harga',
+        label: 'Data',
       ),
       _BottomNavItem(
         icon: Icons.table_chart_outlined,
@@ -1867,8 +1695,8 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                         active ? items[index].activeIcon : items[index].icon,
                         size: 21,
                         color: active
-                            ? const Color(0xFF111827)
-                            : const Color(0xFF9CA3AF),
+                            ? primary
+                            : textSecondary,
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -1879,8 +1707,8 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                               ? FontWeight.w800
                               : FontWeight.w600,
                           color: active
-                              ? const Color(0xFF111827)
-                              : const Color(0xFF9CA3AF),
+                              ? primary
+                              : textSecondary,
                         ),
                       ),
                     ],
@@ -1983,7 +1811,7 @@ class GoldChartPainter extends CustomPainter {
     // ------------------------------------------------------------
 
     final gridPaint = Paint()
-      ..color = const Color(0xFFE5E7EB)
+      ..color = const Color(0xFFE2E8F0)
       ..strokeWidth = 1;
 
     const gridCount = 4;
@@ -2002,7 +1830,7 @@ class GoldChartPainter extends CustomPainter {
       final textPainter = TextPainter(
         text: TextSpan(
           text: value.toStringAsFixed(0),
-          style: const TextStyle(fontSize: 9, color: Color(0xFF9CA3AF)),
+          style: const TextStyle(fontSize: 9, color: const Color(0xFF64748B)),
         ),
         textDirection: TextDirection.ltr,
       );
@@ -2050,7 +1878,7 @@ class GoldChartPainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [Color(0x3322C55E), Color(0x0022C55E)],
+        colors: [Color(0x33F58220), Color(0x00F58220)],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
     canvas.drawPath(areaPath, areaPaint);
@@ -2068,7 +1896,7 @@ class GoldChartPainter extends CustomPainter {
     }
 
     final linePaint = Paint()
-      ..color = const Color(0xFF16A34A)
+      ..color = const Color(0xFFF58220)
       ..strokeWidth = 2.7
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
@@ -2088,7 +1916,7 @@ class GoldChartPainter extends CustomPainter {
       final textPainter = TextPainter(
         text: TextSpan(
           text: data[i].shortDate,
-          style: const TextStyle(fontSize: 9, color: Color(0xFF9CA3AF)),
+          style: const TextStyle(fontSize: 9, color: const Color(0xFF64748B)),
         ),
         textDirection: TextDirection.ltr,
       );
@@ -2130,7 +1958,7 @@ class GoldChartPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final selectedCircle = Paint()
-      ..color = const Color(0xFF16A34A)
+      ..color = const Color(0xFFF58220)
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(selected, 6, outerCircle);
